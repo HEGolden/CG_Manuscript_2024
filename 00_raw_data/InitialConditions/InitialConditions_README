@@ -1,0 +1,29 @@
+This folder includes an Excell spreadsheet with data from our common garden adult fish used to create families for use in the common garden experiment.
+
+The spreadsheet contains the following tabs:
+1. Key:
+  Y - Yes, we have the sample or photo.
+  N - Does not exist - could have done but did not for any number of reasons 
+  NA - Not applicable 
+
+This spreadsheet was compiled by Linda, Kate and Johanna on Jun 17 & 18.
+Reprsents our best, integrated figuring out of everything by checking all the field and lab books and our recollections of what the heck happened.  
+ 
+ 
+2. Accounting: 
+Columns Include: Family, River, Date mated, status of family	female fish id,	Female Tag, Female TL (cm), Female After Stripping Wt (g), Female Before stripping wt (g), Wt of eggs stripped (g), Female DNA; Male DNA,	comments	Male Fish ID, Male Tag,	Male TL (cm), Male Wt (g), Before fert egg sample (dried),	After fert egg sample (Formaldehyde),	Photo's of eggs in 64 Oz containor, CG Rep 1 (#eggs), CG Rep 2 (#eggs), CG Rep 3 (#eggs), Transplant bag number 	Transplant (# eggs) 
+
+3. CommonGarden_InitalEggWeight_2:
+Columns Include:  Family, location,	Date,	Tray weight	num.eggs,	total.wet.wt,	total.dry.wt,	wet.weigth.all,	wet.wt/egg
+
+4. CommonGarden_InitialEggVolume:
+This tab was copied from the file "00_CG_LengthYolkVolume_WokingFile_HG_2022.xlsx" to provide initial egg condition (size) estimates.
+
+Egg volume measurements were taken on 0 days post-fertilization (the day eggs were stripped) to determine if fish from the different rivers had eggs of different sizes prior to conducting the experiment.
+
+Columns Include: ID,	family,	date,	location,	days.post.fert,	Treatment,	indiv.1to15,	ImageJ_num,	Length.mm,	yolk.sac.length,	yolk.sac.height,	yolk.sac.volume,	disposition,	data.source,	reared.wild,	measure.type,	file.name,	original name (from Dropbox),	measured.by,	duplicate.to.remove,	live-eth.test,	initial.postfert,	yolk.vol,	growth,	ln.at.hatch,	ln.at.swimup,	respiration,	eyed,	experiment,	regression.method.X0.84,	Comments,	Comments2,	Duplicate,	Repeat Data,	Repeat Data2,	Repeat Data3,	decision,	ethanol.vs.chambers,	live.vs.chamber
+
+5. EggWeightGraph:
+This tab contains summary statistics (mean egg weight) for each family, i.e., columns of mean egg weight (grams) for each family in each population: Kuparuk (Kup or K), Sagavanirktok (Oks3, O3, or O), and Oksrukuyik (OZev or OZ).
+
+It also has summary statistics of mean, st dev, and st err of initial egg weight for each population and a boxplot showing no statistical difference in egg weight among populations.

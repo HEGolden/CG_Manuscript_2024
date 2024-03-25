@@ -1,0 +1,156 @@
+The LifeStage spreadsheet file named 00_CG_LifeStage_Master_2019_WorkingFile_HG2022.xlsx located in the 00_raw_data/LifeStage Folder is the most up-to-date file for the common garden life stage analyses and contains multiple tabs. 
+
+USE THIS: "LifeStage_Final_HG2022" tab contains the most up-to-date data for survival and hatching data. 
+
+1. LifeStage_Final_HG2022:
+STILL NEEDS DOING - see INCOMPLETE below...
+
+This tab contains the most up-to-date data for survival and life stage over time (i.e., number remaining, number of eyed eggs, number hatched, number of swimups).
+
+Columns include...
+
+HG.checked:	[INCOMPLETE - only checked up to 5 days.post.fert. and again from 19 to 20 days.post.fert.]  2022 data check by Hgolden. Compared entries to data sheets, assessed data gaps, filled data gaps where possible, recalculated hatched over time, etc.
+
+TreatmentTemp.C: Either 8, 12, or 16.	T1 - 8 degrees, T2 - 12 degrees, and T3 - 16 degrees.
+
+TreatmentTank: Either T1, T2, or T3. 	T1 - 8 degrees, T2 - 12 degrees, and T3 - 16 degrees.
+
+Aquarium: Either A1, A2, A3, or A4.	Each treatment tank contained 4 aquariums
+
+Location:	Kup (Kuparuk, also K), OksZev (Oksrukuyik, also OZ), Oks3 (Sagavanirktok, also O3 or O). "W" denotes wild fish (HG: Removed all Oks Zev (OZ) data from this file - These eggs were not viable and no fish were reared from them. Data for all Oks Zev families has been retained in the "Lifestage Final" tab of this Excel workbook).
+
+Family:	Kuparuk = K1 to K16; OksZev: OZ1 to OZ16; Oks3: O1 to O16.
+
+ID:	Unique combination of family and temperature for each tank condition.
+
+Fertilization Date:	Date of fertilization (Kup = 6/13/2017, Oks3 = 6/14/2017.
+
+Date:	Data collection date.
+
+days.post.fert:	Number of days after fertilization (-1 = prefert, 0 = day of fert).
+
+Initial.num.indiv(calc):	Value of "num.remaining (calc)" from the previous sampling day. Calculated number of viable individuals remaining at the end of the previous sampling event (both eggs and fish)
+
+indiv.dead:	Number of dead individuals removed in a sampling event (calculated by adding number dead fry and number dead eggs)
+
+fry.dead:	Number of dead hatchlings and swimmers removed (subset of number of dead individuals)
+
+eggs.dead:	Number of dead eggs removed (subset of number dead individuals)
+
+eggs.samples:	Number of live eggs removed for sampling. Includes individuals removed in 5-day sampling events. 
+
+hatch.sampled:	Number of live hatchlings removed for sampling. Includes both individuals removed in 5-day sampling events and individuals removed for "hatchling" samples.
+
+swim.sampled:	Number of live swimmers removed for sampling. Includes individuals removed in 5-day sampling events and individuals removed for "SwimUp" sampling
+
+dead.sampled:	Number of dead individuals preserved for DNA sampling (subset of number of dead individuals)
+
+lost.fish: 	Number of fish lost to outer chamber and removed
+
+eyed:	Number of individuals from eye.sampled that have eyes
+
+eye.sampled:	Number of individuals randomly pipetted to count for number of eyes
+
+%subsample.eyed	Eyed percent determined by randomly pipetting eggs and counting the number of eyed eggs to get the percentage ((eyed/eye.sampled) * 100)
+
+num.fry:	Number of live fish (num.swimup + num.hatchlings + num.hatchING = num.fry)
+
+% hatched: 	Calculated percentage of remaining organisms that are fish (either hatchling or swimmer) (num.fry/num.remaining(calc) *100)
+
+num.hatchlings:	Number of hatched, non-swimming fish (subset of num.fry, distinct category from num.swimup)
+
+num.swimup:	Number of swimup fish (subset of num.fry, distinct category from num.hatchlings)
+
+# eggs remaining	Number of viable, unhatched eggs remaining in tank following count and sampling.
+
+# organisms remaining:	Number of live individuals remaining in tank following count and sampling
+
+num.remaining (calc):	Number of viable individuals remaining (initial.num - num.dead.indiv - num.sampled.eggs - num.sampled.hatch - swim.sampled - lost.fish).
+
+image.taken:	Indication of whether photo was taken for counts or lengths
+
+Comments:	Comments recorded on data sheets.
+
+General Notes:	Additional comments recorded on data sheets, comments on data entry, etc.
+
+AP data recording notes:	Notes on individual day/family with conflicting data (between images, data binder, etc.) 
+
+#####################################
+
+Other Tabs in this spreadsheet include:
+
+2. Metadata_HG2022: This tab contains the same information listed above for the LifeStage_Final_HG2022 tab.
+
+3. Data Past 85 (unreliable): This tab contains data from days.post.fert. = 54 to days.post.fert. = 76. We determined that measurements and life-stage data beyond days.post.fert. = 40 was not reliable largely due to low survivorship across many families past this date.
+
+
+4. Notes: NEED TO ASSESS these NOTES!  Tab contains two mini tables with notes on some families reg. hatchings, "missing", and Notes and Dates with missing data. Not sure who created this tab. 
+
+5. NOTES_HG2022: one entry... 9/22/22	HG: Compared data in sheet "Lifestage Final" with CG_DailyMortality_TankConditions_2017 - Sept 7 2017 - 8-51 PM.pdf", which contains copies of all original daily tank conditions, mortality counts, hatched counts, swimup counts, etc.
+
+
+7. z_LifeStage_Master: This tab appears to be an early version of the LifeStage_Final_HG2022 tab that includes entries up to days.post.fert. = 17 (16). Columns include: Treatment,	Location,	Family,	Fertilization Date,	Date,	days.post.fert,	Initial.num.indiv(calc),	num.dead.indiv,	num.dead.fry,	num.dead.eggs,	num.sampled.eggs,	num.remaining,	eyed,	eye.sampled,	%eyed,	num.hatched.fry,	hatched.sampled,	%hatched,	num.swimup,	swim.sampled,	%swim,	image.taken,	Comments, and	General Notes
+
+8. z_Lifestage Final: Another version of LifeStage_Final_HG2022 tab. NOT SURE HOW THIS DIFFERS FROM OTHER VERSIONS. But certain it is not the most up-to-date version of this data.
+
+9. z_Metadata: This tab contains the following metadata, presumably for the previous tab "Lifestage Final":
+
+Location:	Kup, OksZev, Oks3. "W" denotes wild fish 
+
+Family:	Kuparuk: K1 - K16; OksZev: OZ1 - OZ16; Oks3: O1-O16
+
+ID:	Unique combination of family and temperature for each tank condition
+
+Fertilization Date:	Date of fertilization (Kup = 6/13/2017, Oks3 = 6/14/2017
+
+Date:	Data collection date
+
+days.post.fert:	Number of days after fertilization (-1 = prefert, 0 = day of fert) 
+
+Initial.num.indiv(calc):	Value of "num.remaining (calc)" from the previous sampling day. Calculated number of viable individuals remaining at the end of the previous sampling event (both eggs and fish)
+
+num.dead.indiv:	Number of dead individuals removed in a sampling event (calculated by adding number dead fry and number dead eggs)
+
+num.dead.fry:	Number of dead hatchlings and swimmers removed (subset of number of dead individuals)
+
+num.dead.eggs:	Number of dead eggs removed (subset of number dead individuals)
+
+num.sampled.eggs:	Number of live eggs removed for sampling. Includes individuals removed in 5-day sampling events. 
+
+num.sampled.hatch:	Number of live hatchlings removed for sampling. Includes both individuals removed in 5-day sampling events and individuals removed for "hatchling" samples. 
+
+swim.sampled:	Number of live swimmers removed for sampling. Includes individuals removed in 5-day sampling events and individuals removed for "SwimUp" sampling
+
+dead.sampled:	Number of dead individuals preserved for DNA sampling (subset of number of dead individuals)
+
+lost.fish: 	Number of fish lost to outer chamber and removed 
+
+eyed:	Number of individuals from eye.sampled that have eyes
+
+eye.sampled:	Number of individuals randomly pipetted to count for number of eyes
+
+%eyed:	Eyed percent determined by randomly pipetting eggs and counting the number of eyed eggs to get the percentage ((eyed/eye.sampled) * 100)
+
+num.fry:	Number of live fish (num.swimup + num.hatchlings + num.hatchING = num.fry)
+
+%hatched:	Calculated percentage of remaining organisms that are fish (either hatchling or swimmer) (num.fry/num.remaining(calc) *100)
+
+num.swimup:	Number of swimup fish (subset of num.fry, distinct category from num.hatchlings and num.hatchING)
+
+num.hatchlings:	Number of hatched, non-swimming fish (subset of num.fry, distinct category from num.swimup and num.hatchING)
+
+num.hatchING:	Number of fish in the process of hatching (curled fish- just hatched or still hatching) (subset of num.fry, distinct category from num.hatchlings and num.hatchING)
+
+num.remaining (calc):	Number of viable individuals remaining (initial.num - num.dead.indiv - num.sampled.eggs - num.sampled.hatch - swim.sampled - lost.fish)  
+
+# eggs remaining:	Number of viable, unhatched eggs remaining in tank following count and sampling 
+
+# organisms remaining:	Number of live individuals remaining in tank following count and sampling 
+
+image.taken:	Indication of whether photo was taken for counts or lengths 
+
+Comments:	Comments recorded on data sheets
+
+General Notes:	Additional comments recorded on data sheets, comments on data entry, etc.
+
+AP data recording notes: 	Notes on individual day/ family with conflicting data (between images, data binder, etc.) 

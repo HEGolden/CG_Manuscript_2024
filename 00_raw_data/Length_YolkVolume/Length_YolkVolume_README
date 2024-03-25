@@ -1,0 +1,117 @@
+The Length_YolkVolume folder contains an Excell spreadsheet and a .csv file both named "00_CG_LengthYolkVolume_WokingFile_HG_2022.*"
+
+The .xlsx spreadsheet contains the following tabs:
+
+1. CG_LnYolkVol_HG_2022: THIS TAB CONTAINS THE DATA for fish length and yolk volume measured over time. This is the most up-to-date version of this data and all other files of similar ilk should be disregarded!!
+
+STILL NEEDED: Measurements from the following individuals:
+CG-D40-T2-K6
+CG-D40-T2-K10
+CG-D40-T2-K12
+CG-D40-T2-O1
+CG-D40-T2-O2
+CG-D40-T2-O4
+CG-D40-T2-O5
+
+CG-D40-T3-K2
+CG-D40-T3-K4
+CG-D40-T3-K5
+CG-D40-T3-K7
+CG-D40-T3-K8
+CG-D40-T3-K16
+CG-D40-T3-O1
+CG-D40-T3-O2
+CG-D40-T3-O6
+
+
+Columns for this tab include:
+date,	location,	days.post.fert,	Treatment,	family,	indiv.1to15,	ImageJ_num,	Length.mm,	yolk.sac.length,	yolk.sac.height,	yolk.sac.volume,	disposition,	reared.wild,	measure.type,	file.name,	original name (from Dropbox),	measured.by,	duplicate.to.remove,	live-eth.test,	initial.postfert,	yolk.vol,	growth,	ln.at.hatch,	ln.at.swimup,	respiration,	eyed,	experiment,	regression.method.X0.84,	Comments,	Comments2,	Duplicate,	Repeat Data,	Repeat Data2,	Repeat Data3,	decision,	data.source,	ethanol.vs.chambers,	live.vs.chamber
+
+date: Date the sample was collected (if available)
+
+location: Source river for population - Kuparuk (Kup or K), Sagavanirktok (Oks3, O3, or O), or Oksrukuyik (OksZev or OZ).
+
+days.post.fert: Number of days after eggs were fertilized.
+
+Treatment: Common garden temperature treatment - T1 = 8 degrees C, T2 = 12 degrees C, and T3 = 16 degrees C.
+
+family: Common garden family ID: Kuparuk = K1 to K16, Sagavanirktok = O1 to O6. Also, W refers to "wild" larval fish that were captured in the river and are not part of the CG experiment (i.e., WK1 to WK5; WO1 to WO5; and WOZ1 to WOZ5.
+
+indiv.1to15: Individuals numbered consecutively that were measured at each time period (either sampled on days.post.fert or measure live on days.post.fert)
+
+ImageJ_num: If measured and saved using ImageJ, then indiv.1to15 number indicated in photo.
+
+Length.mm: Length of individual measured using imageJ (or possibly using digital calipers) in mm.
+
+yolk.sac.length: Length (or width) of individual's yolk sac measured using imageJ in mm.
+
+yolk.sac.height: Height of individual's yolk sac measured using imageJ in mm.
+
+yolk.sac.volume: calculated volume based on individual's yolk sac length and height. 
+FORMULA: yolk.sac.volume = (yolk.sac.length * yolk.sac.height^2) * (3.14159/6)
+
+disposition: Condition of the sample from which measurements were taken include: ethanol, live, dried.ethanol. 
+- If many individuals were still present in the family being sampled during the experiment, then a collection of 10 individuals for length measurements was done. These individuals were fixed in 10% buffered formalin and preserved in ethanol. 
+- If too few individuals were left in a family to warrent a collection, i.e., due to low survivorship, then photos of "live" individuals were taken and measured later in imageJ. These individuals were returned to the chamber from which they were taken and used again in future length measurements. 
+- Some samples in ethanol dried out prior to being measured in ImageJ, these were labeled "dried.ethanol".
+Corrections were made using regressions of live vs ethanol and ethanol vs dried.ethanol to correct for differences due to the different sample dispositions.
+
+reared.wild: reared or wild; "reared"" refers to individuals from families created for the common garden experiment by mating adults from each population and "wild"" refers to individuals from collected from the rivers for each population. Wild individuals were not used in the analyses for this manuscript.
+
+measure.type: ImageJ or calipers. Most individuals were measured using ImageJ.
+
+file.name: File name of the image used for measurements.
+
+original name (from Dropbox): If different from file.name, then this is the original file name.
+
+measured.by: Either A. Kocher 2019; H. Golden 2022; A. Kocher 2019; lnths = H. Golden 2022; HG 2022; H. Golden 2019; A. Pulak 2019; A. Pulak 2019, HG 2022 yolk; or A. Kocher 2019, HG 2022 yolk
+
+duplicate.to.remove: Either "duplicate" or "yes". If either, remove from analysis. 
+
+live-eth.test: if "yes" then these individuals were used for the live vs ethanol regression. The same individuals were measured both "live" and also after being fixed in formalin and preserved in ethanol in order to create a regression to adjust for effects of preservation method.
+
+initial.postfert: if "yes" then these individuals were measured to assess population differences in initial egg size, otherwise "no".
+
+yolk.vol: if "yes" then these individuals were measured to assess changes in yolk sac volume, otherwise "no".
+
+growth: if "yes" then these individuals were measured to assess changes in length over time, otherwise "no".
+
+ln.at.hatch: if "yes" then these individuals were measured to assess differences in length at hatching, otherwise "no".
+
+ln.at.swimup: if "yes" then these individuals were measured to assess differences in length at swim-up, otherwise "no".
+
+respiration: if "yes" then these individuals were took part in respiration trials and were measured for length.
+
+eyed: if "yes" then egg stage was determined to be "eyed"
+
+experiment: Either "yolksac", "growth", "respiration"", "hatch"", or "swimup" This column can be used to select individuals for particular analyses. NOTE: some individuals might be used in multiple analyses and therefore using combinations of previous columns might be more fitting.
+
+regression.method.X0.84: The adjustment based on either live-vs-ethanol regression or live-vs-dried.ethanol regression. 
+FORMULA: =IF(Length.mm > 0, (IF(disposition = "live", Length.mm * 0.84, IF(disposition = "dried.ethanol", Length.mm * 0.8449 + 2.8227, Length.mm))),"")
+
+Comments
+
+Comments2
+
+# The following columns are checks for duplicates and the "decision" column indicate if it is or is not a true duplicate.
+Duplicate
+Repeat Data
+Repeat Data2
+Repeat Data3
+decision: 
+
+data.source: Either "ethanol", "chamber", "live", or "dried.ethanol" This column is similar to "disposition" but contains an additional factor, "chamber", which was to test if individuals from images used to count daily survivors could be used where data was missing. 
+NOTE: The answer was NO, CHAMBERS IMAGES CAN NOT BE USED TO MEASURE FISH LENGTH because the mesh at the bottom of the chamber is not an appropriate scale for fish swimming in the water above the mesh.
+
+ethanol.vs.chambers: These individuals provided an analysis of length differences among individuals measured from preserved "ethanol" samples vs individuals measured from chamber images. See above NOTE for data.source.
+
+live.vs.chamber: These individuals provided an analysis of length differences among individuals measured from photos of "live" fish vs individuals measured from chamber images. See above NOTE for data.source.
+
+
+2. driedout_wet_regression: This tab contains the regression equation comparing dried.ethanol fish with ethanol preserved fish lengths.
+
+3. NOTES_HG2022: This tab contains some notes regarding which files are the most up-to-date (i.e., USE TAB CG_LnYolkVol_HG2022) and should be used going forward, some information regarding why not to use chamber images to attain length data, and some notes on the "eyed" data column, such as which tank has data for which days.post.fert. for eyed stage.
+
+4. If_Needed_AdjustForSamplerBias: This folder contains data for the same individuals measured by different researchers using the same images in ImageJ and could be used to adjust the data for sampler bias via a regression analysis. Alternatively, the "measured.by"" column in the CG_LnYolkVol_HG2022 tab might be used as a random effect if trying to create mixed effects models.
+
+5. z_CG_Lengths_Newest_20190708: This tab is obsolete and should be deleted. Don't know why we are keeping this old, outdated data file, but here it is. DO NOT USE THIS !!!

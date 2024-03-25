@@ -1,0 +1,41 @@
+﻿date,location,days.post.fert,Treatment,family,indiv.1to15,ImageJ_num,Length.mm,yolk.sac.length,yolk.sac.height,yolk.sac.volume,disposition,reared.wild,measure.type,file.name,original name (from Dropbox),measured.by,duplicate.to.remove,live-eth.test,initial.postfert,yolk.vol,growth,ln.at.hatch,ln.at.swimup,respiration,eyed,experiment
+,Kup,15,T1,K16,1,1,,2.663,2.499,8.707669443,ethanol,reared,ImageJ,CG_15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,2,2,,2.621,2.502,8.5909242,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,3,3,,2.744,2.621,9.869982995,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,4,4,,2.62,2.458,8.288258809,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,5,5,,2.786,2.29,7.649804427,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,6,6,,2.702,2.456,8.533758041,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,7,7,,2.5,2.463,7.940851744,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,8,8,,2.872,2.78,11.62177018,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,9,9,,2.293,2.208,5.853295481,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K16,10,10,,3.075,2.54,10.38749455,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,1,1,,2.904,2.835,12.22083819,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,2,2,,2.916,2.788,11.86782993,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,3,3,,3.114,2.828,13.03994243,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,4,4,,3.158,3.075,15.63509849,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,5,5,,3.076,2.953,14.0446681,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,6,6,,2.952,2.792,12.04884553,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,7,7,,2.829,2.829,11.85487824,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,8,8,,2.829,2.784,11.48073427,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,9,9,,3.031,2.956,13.86733641,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,10,10,,3.031,2.705,11.61231293,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,HG 2022,,,no,yes,no,no,no,no,,
+,Kup,15,T1,K15,1,1,,2.836,2.699,10.81708522,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,2,2,,2.586,2.584,9.040902687,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,3,3,,2.967,2.795,12.13610782,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,4,4,,3.142,2.927,14.09450672,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,5,5,,2.894,2.755,11.50111613,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,6,6,,2.887,2.737,11.32386372,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,7,7,,2.71,2.532,9.096932014,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,8,8,,2.895,2.65,10.64482611,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,9,9,,3.029,2.625,10.92838897,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K15,10,10,,2.925,2.606,10.40094856,ethanol,reared,ImageJ,CG_D15_T1_K15.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,1,1,,2.581,2.382,7.667782304,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,2,2,,2.553,2.387,7.616473025,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,3,3,,2.571,2.061,5.718160164,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,4,4,,2.353,2.172,5.812190289,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,5,5,,2.354,2.097,5.420028559,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,6,6,,2.264,2.065,5.054925857,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,7,7,,2.259,2.247,5.972011443,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,8,8,,2.366,2.069,5.303150803,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,9,9,,2.281,1.949,4.536774769,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac
+,Kup,15,T1,K16,10,10,,2.851,2.258,7.611028496,ethanol,reared,ImageJ,CG_D15_T1_K16.jpg,,A. Kocher 2019,,,no,yes,no,no,no,no,,yolksac

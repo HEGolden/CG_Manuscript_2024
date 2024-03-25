@@ -1,0 +1,61 @@
+---
+title: "Life Stage Filter for Manuscript"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This file filters the raw data entry file "00_CG_LifeStage_Master_2019_WorkingFile.csv" to include only the Kup (Kuparuk River) and Oks3 (Sagavanirktok River) Populations and only up to DAY 40 Post Fertilization. Kup and Oks3 were the only viable eggs/populations used in the experiment. Data collected post Day 40 did not include enough families to provide valid comparisons of the data.
+
+```{r cars}
+data <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/LifeStage/00_CG_LifeStage_Master_2019_WorkingFile_HG2022.csv")
+str(data)
+```
+
+## Subset data to include only Kup and Oks3 Populations
+
+Here we subset the data frame to include the two populations used in the common garden experiment.
+
+This code checks the data frame for unique values for Location, which here is equivalent to "population." 
+
+```{r SubsetToKupOks3}
+#Check to make sure all "Location" names were entered correctly
+unique(data$Location)
+
+```
+
+Here, we subset the data to include our two common garden populations: Kup and Oks3; i.e., no "wild" fish "WOZ"   "WK"    "WO"
+
+```{r subsetToKupOks3}
+# Subsets the data to not include "WOZ"   "WK"    "WO"
+
+#first change the data structure from character to factor
+data$Location <- as.factor(data$Location)
+
+# next subset the data frame by "Location"
+sub_data <- subset(data, Location %in% c("Kup","Oks 3"))
+
+# View the subsetted dataframe
+#tail(sub_data)
+
+
+
+```
+
+Next we subset the dataframe to exclude days-post-fertilization beyond Day 40.
+```{r SubsetOnlyUpToDay40}
+ls_data <- sub_data[sub_data$days.post.fert <= 40, ]
+
+```
+
+Finally, we write this data to a new folder specifically for "clean" data.
+
+```{r WriteFilteredData}
+write.csv(ls_data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_LifeStage_data_clean_2023.csv")
+```

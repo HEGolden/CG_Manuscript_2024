@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document>
+  <Version>2.7+git50+17e3e043ec-r97.4</Version>
+  <charset>utf-8</charset>
+  <ApplicationBuildDateTime>2.7+git50+17e3e043ec-r97.4</ApplicationBuildDateTime>
+  <Copyright>Copyright (c) 2007-2017 Vernier Software &amp; Technology and its licensors</Copyright>
+  <FileName>R4_T2_P46_08_06_2017.qmbl</FileName>
+  <CreatorOS>3</CreatorOS>
+  <CreatorApp>3</CreatorApp>
+  <AbsoluteVersion>2</AbsoluteVersion>
+  <NumDerivativePoints>7</NumDerivativePoints>
+  <Stationery>0</Stationery>
+  <CreationDateTime>7/7/2017 9:7:31</CreationDateTime>
+  <ModifiedDateTime>7/7/2017 9:7:31</ModifiedDateTime>
+  <PageBounds>0 0 16.625 11.0833333333</PageBounds>
+  <SensorConflictEnabled>1</SensorConflictEnabled>
+  <Page>
+    <ID>104</ID>
+    <BroadcastTo>0</BroadcastTo>
+    <PageGraphCartesian>
+      <ID>105</ID>
+      <BroadcastTo>0</BroadcastTo>
+      <Visible>1</Visible>
+      <GraphPlotXMin>0.000000</GraphPlotXMin>
+      <GraphPlotXMax>300.000000</GraphPlotXMax>
+      <GraphPlotYMin>0.000000</GraphPlotYMin>
+      <GraphPlotYMax>10.000000</GraphPlotYMax>
+      <GraphConnectLines>1</GraphConnectLines>
+      <GraphShowPointProtectors>1</GraphShowPointProtectors>
+      <GraphDrawRainbow>0</GraphDrawRainbow>
+      <GraphPlotXAutoscale>0</GraphPlotXAutoscale>
+      <GraphPlotYAutoscale>0</GraphPlotYAutoscale>
+      <GraphPlotBaseColumnID>139</GraphPlotBaseColumnID>
+      <GraphPlotTraceIDPairs>2 139 167 139 171</GraphPlotTraceIDPairs>
+    </PageGraphCartesian>
+    <PageTable>
+      <ID>107</ID>
+      <BroadcastTo>0</BroadcastTo>
+      <TableColumn>139 0.900000</TableColumn>
+      <TableColumn>167 0.900000</TableColumn>
+      <TableColumn>171 0.900000</TableColumn>
+    </PageTable>
+    <PageMeter>
+      <ID>172</ID>
+      <MeterColumnID>171</MeterColumnID>
+    </PageMeter>
+    <PageMeter>
+      <ID>168</ID>
+      <MeterColumnID>167</MeterColumnID>
+    </PageMeter>
+  </Page>
+  <DataWorld>
+    <DataWorldRunPrefix>Run</DataWorldRunPrefix>
+    <MatrixDefaultPref>1</MatrixDefaultPref>
+  </DataWorld>
+  <DataSet>
+    <ID>130</ID>
+    <BroadcastTo>1 107</BroadcastTo>
+    <DataSetName>Run 1</DataSetName>
+    <DataSetLatest>1</DataSetLatest>
+    <DataSetMatrixLatest>0</DataSetMatrixLatest>
+    <DataColumn>
+      <ID>139</ID>
+      <ColumnGroupID>138</ColumnGroupID>
+      <BroadcastTo>2 107 105</BroadcastTo>
+      <DataObjectName>Time</DataObjectName>
+      <ColumnUnits>min</ColumnUnits>
+      <ColumnCollectionTimeUnit>2</ColumnCollectionTimeUnit>
+      <ColumnProtected>1</ColumnProtected>
+      <ColumnUserEditable>0</ColumnUserEditable>
+      <ColumnDataType>0</ColumnDataType>
+      <StartTime>0</StartTime>
+      <ColumnStartCollectTime>0</ColumnStartCollectTime>
+      <ColumnUserCreated>0</ColumnUserCreated>
+      <ColumnAllowUserDelete>0</ColumnAllowUserDelete>
+      <DataObjectPrecisionDecimal>1</DataObjectPrecisionDecimal>
+      <DataObjectPrecision>2</DataObjectPrecision>
+      <ColumnForceScientific>0</ColumnForceScientific>
+      <ColumnMatrixStyleNum>-1</ColumnMatrixStyleNum>
+      <DataObjectColor>0x0 0x0 0x0</DataObjectColor>
+      <ColumnPPStyle>0</ColumnPPStyle>
+      <DataObjectDataSource>0</DataObjectDataSource>
+      <ColumnSensorColumn>0</ColumnSensorColumn>
+      <ColumnSensorInputColumn>1</ColumnSensorInputColumn>
+      <ColumnShowLiveReadout>0</ColumnShowLiveReadout>
+      <ColumnMatchTag>Time</ColumnMatchTag>
+      <ColumnCells>
+Z2 1:
+</ColumnCells>
+    </DataColumn>
+    <DataColumn>
+      <ID>167</ID>
+      <ColumnGroupID>166</ColumnGroupID>
+      <BroadcastTo>2 107 105</BroadcastTo>
+      <DataObjectName>Dissolved Oxygen</DataObjectName>
+      <ColumnUnits>mg/L</ColumnUnits>
+      <ColumnProtected>1</ColumnProtected>
+      <ColumnUserEditable>0</ColumnUserEditable>
+      <ColumnDataType>0</ColumnDataType>
+      <StartTime>1502121027</StartTime>
+      <ColumnStartCollectTime>1502121027</ColumnStartCollectTime>
+      <ColumnUserCreated>0</ColumnUserCreated>
+      <ColumnAllowUserDelete>0</ColumnAllowUserDelete>
+      <DataObjectPrecisionDecimal>1</DataObjectPrecisionDecimal>
+      <DataObjectPrecision>2</DataObjectPrecision>
+      <ColumnForceScientific>0</ColumnForceScientific>
+      <ColumnMatrixStyleNum>-1</ColumnMatrixStyleNum>
+      <DataObjectColor>0xffff 0x0 0x3333</DataObjectColor>
+      <ColumnPPStyle>1</ColumnPPStyle>
+      <DataObjectDataSource>0</DataObjectDataSource>
+      <ColumnSensorColumn>1</ColumnSensorColumn>
+      <ColumnSensorInputColumn>1</ColumnSensorInputColumn>
+      <ColumnShowLiveReadout>1</ColumnShowLiveReadout>
+      <ColumnMatchTag>Dissolved Oxygen</ColumnMatchTag>
+      <ColumnCells>
+Z2 1:
+</ColumnCells>
+    </DataColumn>
+    <DataColumn>
+      <ID>171</ID>
+      <ColumnGroupID>170</ColumnGroupID>
+      <BroadcastTo>2 107 105</BroadcastTo>
+      <DataObjectName>Dissolved Oxygen</DataObjectName>
+      <ColumnUnits>mg/L</ColumnUnits>
+      <ColumnProtected>1</ColumnProtected>
+      <ColumnUserEditable>0</ColumnUserEditable>
+      <ColumnDataType>0</ColumnDataType>
+      <StartTime>1502121028</StartTime>
+      <ColumnStartCollectTime>1502121028</ColumnStartCollectTime>
+      <ColumnUserCreated>0</ColumnUserCreated>
+      <ColumnAllowUserDelete>0</ColumnAllowUserDelete>
+      <DataObjectPrecisionDecimal>1</DataObjectPrecisionDecimal>
+      <DataObjectPrecision>2</DataObjectPrecision>
+      <ColumnForceScientific>0</ColumnForceScientific>
+      <ColumnMatrixStyleNum>-1</ColumnMatrixStyleNum>
+      <DataObjectColor>0x0 0x0 0xffff</DataObjectColor>
+      <ColumnPPStyle>2</ColumnPPStyle>
+      <DataObjectDataSource>0</DataObjectDataSource>
+      <ColumnSensorColumn>1</ColumnSensorColumn>
+      <ColumnSensorInputColumn>1</ColumnSensorInputColumn>
+      <ColumnShowLiveReadout>1</ColumnShowLiveReadout>
+      <ColumnMatchTag>Dissolved Oxygen</ColumnMatchTag>
+      <ColumnCells>
+Z2 1:
+</ColumnCells>
+    </DataColumn>
+  </DataSet>
+  <DataSourceServer>
+    <MBLLabQuestSource>
+      <ID>114</ID>
+      <BroadcastTo>0</BroadcastTo>
+    </MBLLabQuestSource>
+  </DataSourceServer>
+  <MBLBrain>
+    <MBLCollectionUserCollectMode>0</MBLCollectionUserCollectMode>
+    <MBLCollectionDropCounterMode>0</MBLCollectionDropCounterMode>
+    <MBLCollectionMatrixMode>0</MBLCollectionMatrixMode>
+    <MBLCollectionRepeat>0</MBLCollectionRepeat>
+    <MBLCollectionOversampling>0</MBLCollectionOversampling>
+    <MBLCollectionNumEWEColumns>1</MBLCollectionNumEWEColumns>
+    <MBLColumnHeader>
+      <MBLColumnHeaderName>Event</MBLColumnHeaderName>
+      <MBLColumnHeaderShortName>Event</MBLColumnHeaderShortName>
+      <MBLColumnHeaderUnits></MBLColumnHeaderUnits>
+    </MBLColumnHeader>
+    <MBLColumnHeader>
+      <MBLColumnHeaderName></MBLColumnHeaderName>
+      <MBLColumnHeaderShortName></MBLColumnHeaderShortName>
+      <MBLColumnHeaderUnits></MBLColumnHeaderUnits>
+    </MBLColumnHeader>
+    <MBLColumnHeader>
+      <MBLColumnHeaderName></MBLColumnHeaderName>
+      <MBLColumnHeaderShortName></MBLColumnHeaderShortName>
+      <MBLColumnHeaderUnits></MBLColumnHeaderUnits>
+    </MBLColumnHeader>
+    <MBLCollectionUserCollectSubMode>0</MBLCollectionUserCollectSubMode>
+    <MBLCollectionDigitalModeDeviceType>0</MBLCollectionDigitalModeDeviceType>
+    <MBLCollectionDigitalModeBarWidth>0.05</MBLCollectionDigitalModeBarWidth>
+    <MBLCollectionDigitalModeFlagWidth>0.05</MBLCollectionDigitalModeFlagWidth>
+    <MBLCollectionDigitalModeGateSeperation>0.5</MBLCollectionDigitalModeGateSeperation>
+    <MBLCollectionEndDigitalAfterNum>1</MBLCollectionEndDigitalAfterNum>
+    <MBLCollectionNumDigitalEvents>16</MBLCollectionNumDigitalEvents>
+    <MBLCollectionTimeUnit>2</MBLCollectionTimeUnit>
+    <MBLCollectionDeltaT>3.000000</MBLCollectionDeltaT>
+    <MBLCollectionNumSamples>6001</MBLCollectionNumSamples>
+    <MBLCollectionMaxDuration>18000.000000</MBLCollectionMaxDuration>
+    <MBLRadiationInterval>50.000000</MBLRadiationInterval>
+    <MBLRadiationIntervalTimeUnit>1</MBLRadiationIntervalTimeUnit>
+    <MBLEWEAverageData>0</MBLEWEAverageData>
+    <MBLSEAverageData>0</MBLSEAverageData>
+    <MBLCollectionSelectedEventTime>0</MBLCollectionSelectedEventTime>
+    <MBLCollectionMiniGCStartTemp>35.000000</MBLCollectionMiniGCStartTemp>
+    <MBLCollectionMiniGCHoldTime>2.000000</MBLCollectionMiniGCHoldTime>
+    <MBLCollectionMiniGCRampRate>5.000000</MBLCollectionMiniGCRampRate>
+    <MBLCollectionMiniGCFinalTemp>65.000000</MBLCollectionMiniGCFinalTemp>
+    <MBLCollectionMiniGCFinalHoldTime>12.000000</MBLCollectionMiniGCFinalHoldTime>
+    <MBLCollectionMiniGCPressure>7.000000</MBLCollectionMiniGCPressure>
+    <MBLChannel>
+      <MBLChannelIndex>1</MBLChannelIndex>
+      <MBLChannelSensorIDName>ODO</MBLChannelSensorIDName>
+      <MBLChannelSensorAutoID>98</MBLChannelSensorAutoID>
+      <MBLChannelCalibrationStorage>1</MBLChannelCalibrationStorage>
+      <MBLChannelReverse>0</MBLChannelReverse>
+      <MBLChannelX4Mode>0</MBLChannelX4Mode>
+      <MBLChannelResetOnCollect>1</MBLChannelResetOnCollect>
+      <MBLChannelTrigger>0</MBLChannelTrigger>
+      <MBLSensorSourceID>114</MBLSensorSourceID>
+      <MBLChannelManualSetup>0</MBLChannelManualSetup>
+      <MBLCalibration>
+        <MBLCalibrationUnits>mg/L</MBLCalibrationUnits>
+        <MBLCalibrationPrettyUnits>mg/L</MBLCalibrationPrettyUnits>
+        <MBLCalibrationIDName>ODOMGL</MBLCalibrationIDName>
+        <MBLCalibrationIDValue>98</MBLCalibrationIDValue>
+        <MBLCalibrationEquationType>1</MBLCalibrationEquationType>
+        <MBLCalibrationCoefficients>2 -0.44444 4.4444</MBLCalibrationCoefficients>
+      </MBLCalibration>
+      <MBLChannelMatch0>167</MBLChannelMatch0>
+    </MBLChannel>
+    <MBLChannel>
+      <MBLChannelIndex>3</MBLChannelIndex>
+      <MBLChannelSensorIDName>ODO</MBLChannelSensorIDName>
+      <MBLChannelSensorAutoID>98</MBLChannelSensorAutoID>
+      <MBLChannelCalibrationStorage>1</MBLChannelCalibrationStorage>
+      <MBLChannelReverse>0</MBLChannelReverse>
+      <MBLChannelX4Mode>0</MBLChannelX4Mode>
+      <MBLChannelResetOnCollect>1</MBLChannelResetOnCollect>
+      <MBLChannelTrigger>0</MBLChannelTrigger>
+      <MBLSensorSourceID>114</MBLSensorSourceID>
+      <MBLChannelManualSetup>0</MBLChannelManualSetup>
+      <MBLCalibration>
+        <MBLCalibrationUnits>mg/L</MBLCalibrationUnits>
+        <MBLCalibrationPrettyUnits>mg/L</MBLCalibrationPrettyUnits>
+        <MBLCalibrationIDName>ODOMGL</MBLCalibrationIDName>
+        <MBLCalibrationIDValue>98</MBLCalibrationIDValue>
+        <MBLCalibrationEquationType>1</MBLCalibrationEquationType>
+        <MBLCalibrationCoefficients>2 -0.44444 4.4444</MBLCalibrationCoefficients>
+      </MBLCalibration>
+      <MBLChannelMatch0>171</MBLChannelMatch0>
+    </MBLChannel>
+  </MBLBrain>
+</Document>

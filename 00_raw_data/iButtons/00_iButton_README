@@ -1,0 +1,5 @@
+This iButtons folder contains the raw data files for iButton temperature loggers deployed within each of the common garden experimental tanks and aquariums within each tank. They contain all 14 rows of file and logger data followed by the following columns of data:
+
+Date/Time, Unit, Value (where Value is Degree C)
+
+These data are used to provide experimental conditions.

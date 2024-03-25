@@ -1,0 +1,44 @@
+The CG_AbioticConditions folder contains the following files:
+
+1. CG_TankTempsChemistry_UNFINISHED.xlsx
+NOTE: THIS SPREADSHEET NEEDS TO HAVE THE DATA VERIFIED AND REPEATED DATA ROWS REMOVED.
+
+Columns include: 
+HG.checked: checked if the data has been varified by cross-checking the original data entry sheets (three ring binder)
+
+TreatmentTemp.C: 8 Degrees C (T1), 12 degrees C (T2), 16 degrees C (T3)
+
+TreatmentTank: T1 (8 Degrees C), T2 (12 degrees C), T3 (16 degrees C)
+
+Aquarium: Either A1, A2, A3, A4 within each of the Treatment tanks
+
+Chamber.num: NEEDS TO BE REMOVED SO DATA IS NOT REPEATED IN THIS FILE
+
+Location: NEEDS TO BE REMOVED SO DATA IS NOT REPEATED IN THIS FILE
+
+Date: Date the data was collected
+
+days.post.fert: number of days post fertilization - REMOVE - NOT NECESSARY FOR THIS DATA FILE
+
+Aquarium.Temp.C: Aquarium tank temperatures using hand-held thermometer (not very accurate compared to iButton temperature logger data)
+
+Nitrate.ppm: Aquarium tank NITRATE using aquarium test strips
+
+nitrite.ppm: Aquarium tank NITRITE using aquarium test strips
+
+hardness.ppm: Aquarium tank HARDNESS using aquarium test strips
+
+chlorine.ppm: Aquarium tank CHLORINE using aquarium test strips
+
+alkalinity.ppm: Aquarium tank ALKALINITY using aquarium test strips
+
+pH: Aquarium tank pH using aquarium test strips
+
+#################################################
+
+2. TankAquarium_TemperatureReadings.csv:
+Columns include: Date, tank,aquarium, tank_aq, Aquarium.Temp.C
+
+This file contains hand-held temperature readings from the CG_TankTempsAndChemistry_UNFINISHED.xlsx spreadsheet for the common garden experimental tanks and aquariums within each tank. 
+
+NOTE: These temperature readings are not as accurate as the iButton temperature logger data deployed within each tank and should not be used for manuscript analyses.
