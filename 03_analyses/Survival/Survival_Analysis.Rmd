@@ -1,0 +1,382 @@
+---
+title: "Common Garden Survival Analysis"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This code uses the packages survival and survminer to examine and compare survivorship of young-of-the-year Arctic grayling from the 2017 Common Garden Experiment. YOY were from two genetically distinct populations: The upper Kuparuk River (Kup) and Sagavanirktok River (aka lower Oksrukuyik Creek, Oks 3). Treatments included cool (8 degrees), warm (12 degrees) and hot (16 degrees) water temperature tanks. Families were created by mating one male with two separate females creating full-sibling, half-sibling, and non-sibling individuals in order to test for trait heredity. The Kuparuk River comprised 16 families and the Oksrukuyik Creek comprised 5 families. 
+
+The original data spreadsheet contains records of the total number of individuals in each family within each treatment tank starting from day 0 (day of fertilization) to n number of days post-fertilization (days-post-fert). The starting number of individuals per family what recorded on days-post-fert 0, and the number of individuals that died each day was tracked over time on data sheets in the lab. Every 5 days, 5-10 individuals from each family in each treatment tank were removed and preserved for growth determination and also for life stage measurements (hatching and swimup). Theae individuals were subtracted from the initial starting number of individuals to provide the number of survivors in each family for each treatment tank. The original data spreadsheet also contains many columns that are not necessary for this survival analysis.
+
+Here, I use the original data spreadsheet to create a file with individual event histories for every individual in each family for each treatment tank, which will then be used in a survival analysis.
+
+The survival analysis uses the R Package "Survival" and instructions provided on the website: Drawing survival curves in R.
+
+## Create Survival Input File
+
+### Read Original Data:
+First, I read the first sheet of the original data spreadsheet file into R as a .csv file. This creates numerous warnings due to the nature of this spreadsheet's columns of data that contain NAs. These warnings can be ignored because they do not relate to the data we need for the survival analysis input file.
+
+```{r SubsetOriginalData, echo=FALSE, warning=FALSE}
+# If necessary, install the required packages for reading and writing .xlsx to .csv
+#install.packages("readxl")
+#install.packages("writexl")
+
+# Load the required packages for reading and writing .xlsx to .csv
+library(readxl)
+library(writexl)
+
+########################################
+# Use the read_excel() function from the readxl package to read the .xlsx file. 
+# Specify the file path and set sheet = 1 to read the first sheet:
+
+orig_data <- as.data.frame(read_excel("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/LifeStage/00_CG_LifeStage_Master_2019_WorkingFile_HG2022.xlsx", sheet = 1))
+
+# Lots of warnings due to missing values in numerous columns for this spreadsheet but for the subset we are creating, that's okay.
+
+# Check the structure of the columns we want to use:
+str(orig_data)
+
+```
+
+### Remove Sampled Inividuals:
+For the Survival Analysis, we need to remove individuals that were sampled for 5-day growth estimates and for life stage measurements (hatching and swimup). Sampling of live individuals was conducted every 5 days.post.fert and ~10 individuals were samples at hatching and swimup life stages.
+
+Below, I calculate the total number of individuals sampled for each treatment and family in order to subtract them from the initial starting number for each family and treatment tank.
+
+The remaining individuals will be followed through our 40 day survival trial by subtracting the number of dead individuals over time for each family in each treatment tank.
+
+Here, I remove NAs from the columns that indicate the number of individuals samples for Day 5 growth estimates, hatching lengths, and swimup lengths.
+```{r RemoveNAsFromSampledColumns}
+
+library(dplyr)
+
+orig_nona <- orig_data %>%
+  mutate(indiv.sampled = ifelse(is.na(indiv.sampled), 0, indiv.sampled),
+         hatch.sampled = ifelse(is.na(hatch.sampled), 0, hatch.sampled),
+         swim.sampled = ifelse(is.na(swim.sampled), 0, swim.sampled))
+
+orig_nona$total.sampled = orig_nona$indiv.sampled + orig_nona$hatch.sampled + orig_nona$swim.sampled
+
+```
+
+
+The function, below, is used to summarize data by groups and returns the total number of individuals 
+```{r SummarizeFunction}
+
+data_total <- function(data, varname, groupnames){
+  require(plyr)
+  total_func <- function(x, col){
+    c(total = sum(x[[col]], na.rm=TRUE))
+  }
+  data_tot<-ddply(data, groupnames, .fun=total_func,
+                  varname)
+  data_tot <- rename(data_tot, c("mean" = varname))
+  return(data_tot)
+}
+
+```
+
+Summarize the Total Sampled by Treatment and Family
+
+```{r SummarizeSampledByTreatFam}
+orig_nona40 <- orig_nona[orig_nona$days.post.fert <= 40 & orig_nona$days.post.fert >= 0, ]
+
+sampled_tot <- data_total(orig_nona40, varname = "total.sampled", 
+                    groupnames=c("TreatmentTank", "Family"))
+
+sampled_tot <- sampled_tot[complete.cases(sampled_tot), ]
+
+write.csv(sampled_tot, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Survival_01_TotalSampled_data40.csv")
+```
+
+Subtract the number sampled from each treatment tank's families from each days "Initial.num..."
+
+```{r SubtractSampled}
+
+# Add a column to "sampled_tot" for days.post.fert = 0
+#sampled_tot$days.post.fert = 0
+
+# Merge the data frames based on matching conditions in three columns
+merged <- left_join(orig_nona40, sampled_tot, by = c("TreatmentTank", "Family"))
+
+# Remove blank rows that did not match sampled_sum TreatmentTank and Family info.
+merged <- merged[complete.cases(merged$TreatmentTank), ]
+
+# Rename "Initial.num.indiv(calc)" to remove parentheses.
+colnames(merged)[12] ="Initial.num.indiv.calc"
+
+
+# Subtract numbers from df2$E based on matching conditions in df1 and df2
+merged$indiv.alive <- merged$Initial.num.indiv.calc - merged$total
+
+
+```
+
+Reduce this data set to the columns and rows we need for the survival analysis:
+```{r SubsetTheDataFile}
+surv40_reduced <- merged[, c("TreatmentTank", "Location", "Family", "days.post.fert", "indiv.alive", "indiv.dead")]
+
+
+
+# Sort sub_data by Tank, Location, Family
+surv40 <- surv40_reduced[order(surv40_reduced$TreatmentTank, surv40_reduced$Location, surv40_reduced$Family, surv40_reduced$days.post.fert), ]
+
+
+# Replace negative numbers with zeros 
+surv40$indiv.alive <- ifelse(surv40$indiv.alive < 0, 0, surv40$indiv.alive)
+
+
+
+write.csv(surv40, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Survival_02_data40.csv")
+```
+
+Notes about the dataset:
+TreatmentTank: Temperature treatment tanks: T1 = 8 degrees C, T2 = 12 degrees C, and T3 = 16 degrees C
+Location: Source river either Kuparuk (Kup) or lower Oksrukuyik/Sagavanirktok (Sag)
+Family: Kup families: K01-K16, Sag families: O1 to O6
+days.post.fert: Survival time in days (0 = day of fertilization)
+indiv.alive: Number alive on x days.post.fert
+indiv.dead: Number dead on x days.post.fert
+
+Need to change this dataframe containing the total number of individuals alive and dead at each "days.post.fert" for each Treatment Tank and Family into a event histories for each individual.
+
+First, expand the data using uncount() with the indiv.alive column, then provide each live individual with a unique number, then create column indicating these individuals are "alive", status = 1.
+
+This is done for each days.post.fert, TreatmentTank, and Family.
+
+```{r CreateNewExpandedDataNumberAlive}
+library(dplyr)
+library(tidyr)
+
+
+# Create a new dataframe with expanded rows
+expand_alive <- surv40 %>%
+  uncount(indiv.alive)
+
+# Label each individual with status = 1 (alive)
+expand_alive$status <- 1
+
+# Convert multiple columns to factor
+expand_alive[, sapply(expand_alive, is.character)] <- lapply(expand_alive[, sapply(expand_alive, is.character)], as.factor)
+
+# Provide each individual with a number 1 to n initial number of individuals
+
+expand_alive <- expand_alive %>%
+  group_by(TreatmentTank, Family, days.post.fert) %>%
+  dplyr::mutate(individual = row_number())
+
+# Create a key (unique ID) for each individual in each TreatmentTank, Family combination:
+expand_alive$key <- as.factor(paste(expand_alive$TreatmentTank, expand_alive$Family, expand_alive$individual, sep = "-"))
+
+
+# Reduce the data set and sort:
+alive <- expand_alive[ , c("key", "days.post.fert", "status")]
+
+# Sort alive by key and days.post.fert
+alive <- as.data.frame(alive[order(alive$key, alive$days.post.fert), ])
+
+
+write.csv(alive, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Survival_03_surv40_Alive.csv")
+```
+
+
+Need to add rows to each "key" so days.post.fert counts up to 40 for each "key" and status = 2
+
+```{r AddMissingDPF_RowsWithStatus2}
+library(tidyr)
+
+
+# Check the number of rows for each key
+row_counts <- table(alive$key)
+
+# Get the keys with less than 41 rows
+keys_to_add <- names(row_counts[row_counts < 41])
+
+# Create a template dataframe with complete set of keys and 41 rows
+template <- expand.grid(key = keys_to_add, days.post.fert = 0:40, status = 2)
+
+# Merge the template dataframe with the original dataframe
+new_df <- merge(alive, template, all = TRUE)
+
+# Sort the new dataframe by key and days.post.fert
+new_df <- new_df[order(new_df$key, new_df$days.post.fert), ]
+
+
+# Remove rows based on conditions
+# Removed duplicate rows 
+new_surv <- new_df %>%
+  group_by(key, days.post.fert) %>%
+  filter(!(duplicated(key) & duplicated(days.post.fert) & status == 2))
+
+
+write.csv(new_surv, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Survival_04_NewSurv40.csv")
+
+```
+Some days.post.fert (i.e., dpf = 11) were assigned status = 2 in the code above, but were also assigned status = 1 on dpf = 12, for example.  This occurs when a day.post.fert was missing in the original spreadsheet (i.e., if fish were not counted or sampled that particular day). In other words, the individual was alive but not counted as such until the following day. I fix incorrect status assignment in the code below.
+
+
+```{r FixMissingDPF_Equal2}
+# In the dataframe called 'new_surv, with columns 'key' and 'status'
+# Iterate through each row
+
+library(dplyr)
+
+# Remove rows that were added above and assigned a 2, when individual is still within status = 1.
+
+surv_data <- new_surv %>%
+  group_by(key) %>%
+  mutate(status = ifelse(
+    lag(status) == 1 & lead(status) == 1, 1, status))
+
+surv_data$status[surv_data$days.post.fert == 0] <- 1
+
+write.csv(surv_data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Survival_04_Surv40_data.csv")
+```
+This Data Set Includes Columns:
+key - Unique individual code, includes TreatmentTank # (T1, T2, or T3), Family (i.e., K1, K2... O1, O2), and individual number 1 to n.
+days.post.fert: Survival time in days (0 = day of fertilization)
+status: Either alive 1 or dead 2
+
+Below I expand the 'key' column to include columns for 'treatment', 'family', and 'individual' and all another column for 'location' to indicate Kuparuk (Kup) and Sagavanirktok (Sag) populations.
+
+THIS FINAL DATA SET is saved in the 02_clean_data folder and will be used in the SURVIVAL ANALYSIS that follows.
+
+```{r JFinalCleanSurvivalData}
+surv_data$key2 <- surv_data$key
+
+# Expand 'key' column to specify
+surv_data <- separate(surv_data, col = key2, into = c("treatment", "family", "individual"), sep = "-")
+
+
+surv_data$location <- ifelse(substr(surv_data$family, 1, 1) == "K", "Kup", "Sag")
+
+write.csv(surv_data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Survival_40Day_Data.csv")
+```
+
+
+
+# Survival Analysis
+
+##Load the Packages: Survival and Survminer
+```{r ILoadRPackages}
+#install.packages("survminer")
+#install.packages("survival")
+
+library(survminer)
+require(survival)
+
+```
+
+```{r HSurvivalData-Load}
+## Add survival object
+df_surv <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Survival_40Day_Data.csv")
+
+```
+
+
+
+```{r GSurvivalAnalysis}
+
+fit1 <- survfit(Surv(days.post.fert, status) ~ location, data = df_surv)
+
+survdiff(formula = Surv(days.post.fert, status) ~ location, data = df_surv)
+sd1 <-survdiff(formula = Surv(days.post.fert, status) ~ location, data = df_surv)
+pval <- 1 - pchisq(sd1$chisq, length(sd1$n) - 1)
+pval
+
+
+print(fit1)
+summary(fit1)
+
+```
+
+```{r FPlotSurvivalFit1}
+plot(fit1, col=1:2, lwd=2, mark.time=FALSE,
+xlab="Days Post Fertilization", ylab="Survival")
+legend(750, .9, c("Kuparuk", "Sagavanirktok"),
+col=1:2, lwd=2, bty='n')
+```
+
+```{r ECustomizedSurvivalKupSag}
+ggsurvplot(
+  fit1,
+  data = df_surv,
+  size = 1,                 # change line size
+  palette =
+    c("#E7B800", "#2E9FDF"),# custom color palettes
+  conf.int = TRUE,          # Add confidence interval
+  pval = TRUE,              # Add p-value
+  risk.table = TRUE,        # Add risk table
+  risk.table.col = "strata",# Risk table color by groups
+  legend.labs =
+    c("Kuparuk", "Sagavanirktok"),    # Change legend labels
+  risk.table.height = 0.25, # Useful to change when you have multiple groups
+  ggtheme = theme_bw()      # Change ggplot2 theme
+)
+```
+
+```{r DSurvival-location+treatment}
+## Add survival object
+
+fit2 <- survfit(Surv(days.post.fert, status) ~ location + treatment, data = df_surv)
+
+sd2 <-survdiff(formula = Surv(days.post.fert, status) ~ location + treatment, data = df_surv)
+sd2
+pval2 <- 1 - pchisq(sd2$chisq, length(sd2$n) - 1)
+pval2
+
+print(fit2)
+summary(fit2)
+
+```
+
+```{r CPlotSurvivalFit2}
+plot(fit2, col=c("tomato", "tomato3", "tomato4", "skyblue1", "steelblue3", "steelblue4"), lwd=2, mark.time=FALSE,
+xlab="Days Post Fertilization", ylab="Survival")
+legend(1, 0.7, c("Kup-8", "Kup-12",  "Kup-16", "Sag-8", "Sag-12", "Sag-16"),
+col=c("tomato", "tomato3", "tomato4","skyblue1", "steelblue3", "steelblue4"), lwd=2, bty='n')
+```
+
+```{r BAnotherSurvivalCurveWithCIs}
+## Add survival object
+## survfit(Surv(days.post.fert, status) ~ location + treatment, data = df_surv)
+ggsurvplot(
+   fit2,                    # survfit object with calculated statistics.
+   data = df_surv,          # data used to fit survival curves. 
+   risk.table = TRUE,       # show risk table.
+   pval = TRUE,             # show p-value of log-rank test.
+   conf.int = TRUE,         # show confidence intervals for 
+                            # point estimates of survival curves.
+   xlim = c(0,45),         # present narrower X axis, but not affect
+                            # survival estimates.
+   xlab = "Time in days",   # customize X axis label.
+   break.time.by = 10,     # break X axis in time intervals by 500.
+   ggtheme = theme_light(), # customize plot and risk table with a theme.
+ risk.table.y.text.col = T, # colour risk table text annotations.
+  risk.table.height = 0.37, # Useful to change when you have multiple groups
+  risk.table.y.text = FALSE # show bars instead of names in text annotations
+                            # in legend of risk table
+)
+
+```
+#######################################
+
+```{r TryingSomethingSmooth}
+# extraction
+
+d1 <- with(fit2, data.frame(time, surv, strata=rep(1:6, each=length(surv) / 6)))
+
+cols <- c("tomato", "tomato3", "tomato4", "skyblue1", "steelblue3", "steelblue4")
+plot(d1$time, d1$surv, type="n", ylim=0:1)
+sapply(1:6, function(x) with(d1[d1$strata == x, ], lines(time, surv, type="l", col=cols[x])))
+legend("bottomleft", legend=c("Kup-8", "Kup-12",  "Kup-16", "Sag-8", "Sag-12", "Sag-16"), lty=1, col=cols, title="Strata")
+
+```

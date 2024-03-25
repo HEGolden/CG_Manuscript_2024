@@ -1,0 +1,20 @@
+Type,River,Unit,n,Mean,SD,SE
+Alkalinity,Kuparuk River,-,-,-,-,-
+,Oksrukuyik Creek,ueq/L,44,271.65,104.51,15.94
+,Toolik Lake,ueq/L,1182,186.48,358.94,10.44
+,,,,,,
+Ammonium,Kuparuk River,uM,850,0.59,0.82,0.03
+,Oksrukuyik Creek,uM,641,0.70,0.89,0.04
+,Toolik Lake,uM,1365,0.40,0.41,0.01
+,,,,,,
+DOC,Kuparuk River,uM,812,304.53,124.66,4.38
+,Oksrukuyik Creek,uM,279,340.14,123.60,7.41
+,Toolik Lake,uM,1207,406.10,47.31,1.36
+,,,,,,
+TDN,Kuparuk River,uM,865,11.48,6.10,0.21
+,Oksrukuyik Creek,uM,355,14.76,4.39,0.23
+,Toolik Lake,uM,1200,13.63,2.26,0.07
+,,,,,,
+TDP,Kuparuk River,uM,822,0.11,0.30,0.01
+,Oksrukuyik Creek,uM,335,0.13,0.20,0.01
+,Toolik Lake,uM,923,0.06,0.06,0.00

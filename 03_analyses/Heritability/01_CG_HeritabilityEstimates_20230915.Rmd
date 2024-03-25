@@ -1,0 +1,304 @@
+---
+title: "Heritability - Swim-Up Length"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Introduction:
+We conducted a common garden experiment in 2017, which included calculating yolk volumes of eggs and larval fish and length measurements of larval fish over time and at key life history stages (i.e. egg hatching and larval swim-up). The goal of this script is to estimate heritability of early life-history traits, such as length at hatching and length at swim-up for two neutrally genetically distinct populations raised in a common garden experiment at three different temperatures (8, 12, and 16 degrees C). 
+
+Heritability will be calculated using sibship relations from full and half sibling families where each male (sire) was mated with two females (Dam). For this analysis, "Dam" and "family" are interchangeable.
+
+The initial data set contains information for other measurements, as well, including growth (length over time) and size of fish used in other common garden experiments, such as respiration and thermal preference. Additionally, for growth determination, if we had enough larvae in the sample, we collected a subsample of individuals, fixed the subsample in 10% formalin, then preserved the subsample in 70% ethanol until the fish could be measured. If we did not have enough larvae in the sample, i.e. due to high mortality, the fish were measured while alive (live) and returned to their treatment container. We used a regression analysis to adjust for effects of ethanol preservation for the live fish measurements.
+
+Load the Data:
+The data set consists of fish lengths measured over time. We had three treatment groups (T1 = 16 C, T2 = 12 C, and T3 = 16 C) and two populations per treatment (K or Kup = Kuparuk, O or Oks3 = Lower Oksrukuyik). We also have fish that we raised from eggs (reared) and that we caught from the rivers soon after hatching (wild). 
+
+Here, a subset of the master data file is created to only examine fish at hatching and at swimup stages.
+
+```{r LoadLengthData}
+data <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Length_YolkVolume/00_CG_LengthYolkVolume_WokingFile_HG_2023.csv")
+
+head(data)
+```
+
+Filter out the ethanol preserved fish that had descicated due to ethanol evaporation:
+
+The ethanol preservative in a few of the samples evaporated over time, leaving the sample descicated. We measured these individuals anyway and labeled their "disposition" as "dried.ethanol." We will create a standard curve by purposely drying ethanol-preserved fish that we have already measured and re-measuring each individual after descication. We will regress the descicated fish measurements versus ethanol-preserved measurements to create a function that we can use to estimate pre-descication lengths in order to include these fish in our common garden experiment. 
+
+For now, however, we must remove the dried.ethanol fish from the data.
+
+```{r RemoveDriedEthanolFish}
+data <- subset(data, disposition != "dried.ethanol")
+str(data$disposition)
+```
+
+
+
+Create Data Sets:
+Hatch and Swim-up life-stage filtering:
+
+Below I create two subsets from the common garden length data file: hatch and swim-up. The "hatch" subset contains lengths of fish measured at time of hatching. The "swim-up" subset contains lengths of fish measured at the time the fish become positively bouyant and begin actively feeding. Prior to swim-up, the fish depend entirely on their yolk-sac for nurishment.
+
+
+Reared versus Wild filtering (not necessary here):
+
+The length data file contains information for reared (raised from eggs) and wild (caught from the rivers, soon after hatching) individuals. Here, we only want to consider reared fish, because these wild fish show growth bias from having experienced some growth in the rivers. Reared fish have only ever experienced common garden conditions and are free from enviromental phenotypic variation. 
+
+However, we do not need to subset wild and reared in this analysis, because by nature of the life-stages (hatch and swim-up) these subsamples of the data already contain only reared individuals.
+
+But, be aware that in other analyses the data will likely require filtering using wild and reared as factors.
+
+
+```{r subsetData}
+hatch <- subset(data, experiment == "hatch")
+swmup <- subset(data, experiment == "swimup")
+
+```
+
+Reduce the columns in the hatch data set to include only those of interest.
+
+```{r ReduceHatch}
+
+hatch <- hatch[ , c("location", "Treatment", "family", "sire", "Length.mm")]
+
+str(hatch)
+
+```
+
+```{r ChangeChrToFactor}
+library(dplyr)
+
+hatch <- hatch %>% mutate_if(is.character, as.factor)
+str(hatch)
+
+```
+Here, I conduct separate ANOVA analyses for each population and family type combination.
+```{r ANOVAs}
+library(tidyverse)
+
+# ANOVA for Population Kup - Full Siblings
+model_Kup_full <- lm(Length.mm ~ family, data = filter(hatch, location == "Kup"))
+anova_Kup_full <- anova(model_Kup_full)
+
+# ANOVA for Population Kup - Half Siblings
+model_Kup_half <- lm(Length.mm ~ sire, data = filter(hatch, location == "Kup"))
+anova_Kup_half <- anova(model_Kup_half)
+
+# ANOVA for Population Sag - Full Siblings
+model_Sag_full <- lm(Length.mm ~ family, data = filter(hatch, location == "Sag"))
+anova_Sag_full <- anova(model_Sag_full)
+
+# ANOVA for Population Sag - Half Siblings
+model_Sag_half <- lm(Length.mm ~ sire, data = filter(hatch, location == "Sag"))
+anova_Sag_half <- anova(model_Sag_half)
+
+
+
+
+```
+
+
+Calculate Heritability: Heritability can be estimated by dividing the variance explained by the family type (genetic variance) by the total variance. 
+
+
+```{r Load_lme4}
+library(lme4)
+
+```
+
+Run a linear models with population, sire, treatment as fixed effects and with Family (Dams) as random effect.
+```{r RunLMM}
+
+mod1 <- lm(Length.mm ~ Treatment, data = hatch)
+mod2 <- lme4::lmer(Length.mm ~ 1 + (1|family) + Treatment, data = hatch, REML = TRUE)
+mod3 <- lme4::lmer(Length.mm ~ 1 + (1|location/family) + Treatment, 
+                   data = hatch, REML = TRUE)
+mod4 <- lme4::lmer(Length.mm ~ 1 + (1|location) + (1|family) + Treatment, 
+                   data = hatch, REML = TRUE)
+mod5 <- lme4::lmer(Length.mm ~ 1 + (1|location) + (1|family) + (1|sire) + Treatment, 
+                   data = hatch, REML = TRUE)
+```
+
+Use Akaike Informatino Criterion (AIC) to find the best fitting model
+
+```{r AIC}
+aic_vals <- c(AIC(mod1), extractAIC(mod2)[2], extractAIC(mod3)[2], 
+              extractAIC(mod4)[2], extractAIC(mod5)[2])
+names(aic_vals) <- c("mod1","mod2","mod3", "mod4", "mod5")
+aic_vals
+```
+
+Models 5 the lowest and suggest that there are important differences among populations (location), among families within populations (family), and among mothers with the same fathers (sire).
+
+We need to check that the model is valid and does not violate assumptions:
+
+```{r CheckMod4Assumptions}
+lattice::qqmath(mod5)
+
+```
+
+Print the variance components:
+```{r PrintVarComp}
+print(vc <- VarCorr(mod5))  ## default print method: standard dev and corr
+## both variance and std.dev.
+print(vc,comp=c("Variance","Std.Dev."), digits=2)
+```
+```{r Mod5}
+mod5
+```
+Calculate h2 using the results from the model.
+
+```{r calculate_h2}
+
+add_var <- 2*(0.2016^2) + 4*(0.3235^2) # variance by family (mothers with same or different fathers) and variance by sires (fathers)
+total_variance <- (0.2016^2) + (0.3235^2) + (0.4763^2) + (0.7053^2) # sum of all Std. Dev. squared = total variance
+
+h2 <- add_var/total_variance
+h2
+```
+
+
+Estimate Trait differentiation among the two populations:
+Use the model to estimate Qst...
+
+Qst = VarPop^2 / (VarPop^2 + 8(VarFam^2 + VarSire^2))
+
+```{r QstEstimateFromModel}
+
+num_qst <- 0.4763^2 # numerator qst = population variace component
+dem_qst <- 0.4763^2 + (8*(2*(0.2016^2) + 4*(0.3235^2))) # denominator qst = population variance + (family + sire) variance components
+qst <- num_qst/dem_qst
+qst
+```
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  Trying the MCMCglmm package  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+```{r LoadLengthData}
+data <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Length_YolkVolume/00_CG_LengthYolkVolume_WokingFile_HG_2023.csv", header = TRUE)
+
+head(data)
+
+```
+
+Subset the full dataset to inlude only Hatchling and SwimUp life stages (from days.post.fert. column) and only the columns of interest in the model.
+
+```{r SubsetData}
+
+data1 <- data[,c("days.post.fert", "location", "Treatment", "Dam", "sire", "Length.mm")]
+
+hch_swm <- subset(data1, days.post.fert == "Hatchling" | days.post.fert == "SwimUp")
+
+hch_swm <- hch_swm %>%
+  mutate(animal = paste(Dam, row_number(), sep = "_"))
+
+head(hch_swm)
+
+```
+
+```{r ChangeChrToFactor}
+library(dplyr)
+
+hch_swm <- hch_swm %>% mutate_if(is.character, as.factor)
+str(hch_swm)
+
+```
+
+Hadfield 2010's MCMC method for multi-response generalized linear mixed models from the MCMCglmm R package can be used to sample from conditional distributions. More than one response variable can be analyzed simultaneously. Multi-binomial distributions can be followed and a range of variance structures are permitted for random effects.
+
+Here's an example from Hadfield 2010:
+```{r FullHalf_datasets}
+#install.packages('MCMCglmm')
+library(MCMCglmm)
+
+
+# Change tarsus to hatch Length.mm
+# Change back to swimup Length.mm
+# change animal to fish.ID - will need to add this column
+# change dam to Dam
+# change fosternest to sire (???) - not sure about this
+# change hatch date to 0 = hatch and 1 = swimup (???) - not sure about this
+# change sex to location (population = Kup or Sag)
+
+```
+
+"a 3 column data frame with an individual's identifier (animal) in the first column and its
+parental identifiers in the second and third columns. The pedigree often contains more individuals
+than are present in the data frame (in this example the pedigree also includes the
+parental generation) but all animal's in the data frame must have a row in the pedigree."
+
+
+In order to model covariance between tarsus and back, use the following code: # Note, could try covar btwn hatch and swimup lengths??
+```{r TheMCMCmodel}
+### ** Examples
+
+
+# Example 1: univariate Gaussian model with standard random effect
+
+
+model1<-MCMCglmm(Length.mm ~ 1, random = ~ location + Treatment + Dam + sire, data=hch_swm, verbose=FALSE,
+ nitt=1300, burnin=300, thin=1)
+
+summary(model1)
+
+```
+
+```{r UsingMyDataWithExampleScript}
+
+
+#random = ~ us(trait):fosternest + us(trait):animal # to measure covar btwn two response terms
+#random = ~ us(1+age):individual # random intercept-slope model with a covariance term
+#random = ~ us(1 + poly(age, 2)):individual #for higher order polynomials
+#rcov = ~ us(trait):units
+
+#prior <- list(R = list(V = diag(2)/3, nu = 2), 
+#              G = list(G1 = list(V = diag(2)/3, nu = 2), 
+#                       G2 = list(V = diag(2)/3, nu = 2)))
+
+CGped <- hch_swm[ ,c("animal", "Dam", "sire")]
+
+m1 <- MCMCglmm(fixed = Length.mm ~ trait:location + trait:Treatment - 1,
+               random = ~ us(trait):animal + us(trait):family,
+               rcov = ~ us(trait):units,
+               family = c("gaussian", "gaussian"), nitt = 60000, burnin = 10000,
+               thin = 25, data = hch_swm, pedigree = CGped)
+
+```
+
+```{r CODA}
+#install.packages('coda')
+library(coda)
+
+
+densplot(m1$Sol)
+```
+
+CONTINUE HERE WITH COPY PASTE
+
+
+
+#Additive and dominance example
+priorADE <- list(G = list(G1 = list(V =1, nu = 0.002), +
+                            G2 = list(V = 1, nu = 0.002)), +
+                   R = list(V = 1, nu = 0.002))
+
+Ainv <- inverseA(warcolak[, 1:3])$Ainv
+Dinv <- makeD(warcolak[, 1:3])$Dinv
+warcolak$IDD <- warcolak$ID
+
+warcolak.MCMC <- MCMCglmm(trait1 ~ 1, random = ~ID + IDD, + 
+                            ginverse = list(ID = Ainv, IDD = Dinv), data = warcolak, + 
+                            prior = priorADE, + 
+                            nitt = 105000, thin = 100, burnin = 5000, + 
+                            verbose = TRUE) 
+```

@@ -1,0 +1,137 @@
+---
+title: "Heritability - Hatch Length"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+Here I use the R package MCMCglmm to fit multiple response generalized linear mixed models to our 2017 common garden length at hatch and swimup response variables because a range of distributions are supported and several types of variance structure for the random effects and residuals can be fitted. The function uses a Bayesian approach that incorporates terminology for fixed and random effects.
+
+The model has three components, a) a probability density function, b) a standard linear mixed model with fixed and random predictors, and c) variance structures. See Hadfield 2010 for more information.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  Trying the MCMCglmm package  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+```{r LoadLengthData}
+
+hatch <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_MCMCglmm_Hatch_20230919.csv")
+head(hatch)
+
+```
+
+
+The response variables, length and yolk_vol, need to be centered such that the mean is zero and standard deviation is 1. Here I use the  z-transformation, where you subtract the mean and divide by the standard deviation of your variable. The result will have mean=0 and sd=1.
+
+```{r ScaleResponseVariables}
+
+ library(dplyr)
+z_hatch <- hatch %>% group_by(population, treatment) %>% mutate(z_length=scale(length))
+z_hatch <- z_hatch %>% group_by(population, treatment) %>% mutate(z_yolk_vol=scale(yolk_vol))
+
+head(z_hatch)
+
+z_hatch %>%
+    group_by(population, treatment) %>%
+    summarise(Mean = mean(z_length), Median = median(z_length), StDev = sd(z_length), Count = n())
+
+```
+
+```{r ChangeChrToFactor}
+z_hatch$population <- as.factor(z_hatch$population)
+z_hatch$treatment <- as.factor(z_hatch$treatment)
+z_hatch$dam <- as.factor(z_hatch$dam)
+z_hatch$sire <- as.factor(z_hatch$sire)
+z_hatch$animal <- as.factor(z_hatch$animal)
+str(z_hatch)
+
+```
+
+Hadfield 2010's MCMC method for multi-response generalized linear mixed models from the MCMCglmm R package can be used to sample from conditional distributions. More than one response variable can be analyzed simultaneously. Multi-binomial distributions can be followed and a range of variance structures are permitted for random effects.
+
+Here's an example from Hadfield 2010:
+
+"a 3 column data frame with an individual's identifier (id) in the first column and its parental identifiers in the second and third columns. The pedigree often contains more individuals than are present in the data frame (in this example the pedigree also includes the parental generation) but all id's in the data frame must have a row in the pedigree."
+
+```{r ChatGPT_suggestion}
+library(MCMCglmm)
+
+prior <- list(R = list(V = diag(2)/3, n = 6,
+                       G = list(G1 = list(V = diag(2)/3, n = 6,
+                                          G2 = list(V = diag(2)/3, n = 6)))))
+
+ped_hatch <- cbind(z_hatch$animal, z_hatch$dam, z_hatch$sire)
+
+
+# Define the model
+
+model <- MCMCglmm(cbind(z_length, z_yolk_vol) ~us(trait):population + trait:treatment - 1, 
+                  random = ~us(trait:animal) + us(trait:sire) +~us(trait:dam),
+                  rcov = ~us(trait):units, data = z_hatch, 
+                  pedigree = ped_hatch,
+                  family = c("gaussian", "gaussian"), 
+                  nitt = 10000, burnin = 1000)
+summary(model)
+head(model)
+
+densplot(model$Sol)
+
+```
+
+
+```{r TheMCMCmodel}
+### ** Examples
+
+
+# Example 1: Gaussian model with dam and sire as random effect
+
+
+model1 <- MCMCglmm(Length.mm ~ 1, random = ~ dam + sire, data=hatch, verbose=FALSE, nitt=1300, burnin=300, thin=1)
+
+summary(model1)
+
+```
+
+```{r ModelT12KupHatch}
+
+#random = ~ us(trait):fosternest + us(trait):id # to measure covar btwn two response terms
+#random = ~ us(1+age):individual # random intercept-slope model with a covariance term
+#random = ~ us(1 + poly(age, 2)):individual #for higher order polynomials
+#rcov = ~ us(trait):units
+
+#prior <- list(R = list(V = diag(2)/3, nu = 2), 
+#              G = list(G1 = list(V = diag(2)/3, nu = 2), 
+#                       G2 = list(V = diag(2)/3, nu = 2)))
+
+CGped <- hatch[ ,c("id", "dam", "sire")]
+
+model2 <- MCMCglmm(fixed = Length.mm ~ 1,
+                   data=hatch, verbose=FALSE, 
+                   nitt=60000, burnin=1000, thin=25, pedigree = CGped, nodes = "ALL")
+
+```
+###########################################
+###########################################
+###########################################
+
+```{r Vignette_fullfact}
+library(fullfact)
+
+hatch <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/hatchlingKupT1_length.csv")
+
+head(hatch)
+```
+
+```{r TryExample}
+length_mod1<- observLmer(observ = hatch, dam = "dam", sire = "sire", response = "length)
+length_mod1
+
+
+```

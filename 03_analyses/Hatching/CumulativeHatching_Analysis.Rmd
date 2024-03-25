@@ -1,0 +1,211 @@
+---
+title: "Common Garden Cumulative Hatching Analysis"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This code creates cumulative hatching curves for each of the 2017 Common Garden populations (Kup and Sag) for each of the experimental temperatures (8, 12, and 16 degrees C) of young-of-the-year Arctic grayling reared in the 2017 Common Garden Experiment. YOY were from two genetically distinct populations: The upper Kuparuk River (Kup) and Sagavanirktok River (aka lower Oksrukuyik Creek, Oks 3). Treatments included cool (8 degrees), warm (12 degrees) and hot (16 degrees) water temperature tanks. Families were created by mating one male with two separate females creating full-sibling, half-sibling, and non-sibling individuals in order to test for trait heredity. The Kuparuk River comprised 16 families and the Oksrukuyik Creek comprised 5 families. 
+
+The original data spreadsheet contains records of the total number of individuals in each family within each treatment tank starting from day 0 (day of fertilization) to n number of days post-fertilization (days-post-fert). The starting number of individuals per family was recorded on days-post-fert 0, and the number of individuals that hatched each day was tracked over time on data sheets in the lab. A total of 10 hatchlings from each family were collected, fixed in 10% formalin solution, and then preserved in 70% ethanol for length determination. 
+
+Data were reliably collected from days.post.fert = 0 to days.post.fert = 40 so the final hatching data set contains only data within this timeframe.
+
+
+Here, I use the original data spreadsheet to create a file for determining hatching rates and to create cumulative hatching graphs for each population and temperature treatment.
+
+
+## Create Hatching Input File
+
+### Read Original Data:
+First, I read the first sheet of the original data spreadsheet file into R as a .csv file. This creates numerous warnings due to the nature of this spreadsheet's columns of data that contain NAs. These warnings can be ignored because they do not relate to the data we need for the survival analysis input file.
+
+```{r SubsetOriginalData, echo=FALSE, warning=FALSE}
+# If necessary, install the required packages for reading and writing .xlsx to .csv
+#install.packages("readxl")
+#install.packages("writexl")
+
+# Load the required packages for reading and writing .xlsx to .csv
+library(readxl)
+library(writexl)
+
+########################################
+# Use the read_excel() function from the readxl package to read the .xlsx file. 
+# Specify the file path and set sheet = 1 to read the first sheet:
+
+orig_data <- as.data.frame(read_excel("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/LifeStage/00_CG_LifeStage_Master_2019_WorkingFile_HG2023.xlsx", sheet = 1))
+
+# Lots of warnings due to missing values in numerous columns for this spreadsheet but for the subset we are creating, that's okay.
+
+
+sub_data1 <- subset(orig_data, reared.wild == "reared")
+sub_data2 <- subset(sub_data1, days.post.fert < "41")
+
+
+# Check the structure of the columns we want to use:
+str(sub_data2)
+
+```
+
+### Create Hatching Data File:
+For the Hatch Rate Analysis, I retain only the columns that are necessary for creating graphs and determining differences among populations and treatments. 
+
+Columns retained:
+- TreatmentTemp.C:  8, 12, and 16 degrees C
+- TreatmentTank: T1 = 8, T2 = 12, and T3 = 16 degrees C
+- Aquarium: The four aquariums within each TreatmentTank (A1, A2, A3, and A4)
+- Location: Kup or Sag (same as "population")
+- Family: K1-K16 and O1-O6 (no O3)
+- ID: Family combined with TreatmentTank, i.e., Kup3_16
+- FertilizationDate: Date the eggs were fertilized (Kup = 6/13/2017, Oks 3 = 6/14/2017)
+- Date: Date observations/samples were made/collected
+- days.post.fert: Date minus FertilizationDate equals the number of days after eggs were fertilized
+- Initial.num.indiv.calc: Equal to the previous day's "num.remaining (calc), which is calculated by subtracting the sum of indiv.dead, indiv.sampled, hatch.sampled, swim.sampled and fish.lost from the Initial.num.indiv.calc for each day. 
+- indiv.dead: count of number of dead individuals per day that were detected and removed from each chamber (each family chamber within each treatment tank).
+- fry.dead: number dead that were fry stage
+- eggs.dead: number dead that were egg stage
+- indiv.sampled: number of individuals sampled
+- hatch.sampled: number sampled that were at hatchling stage
+- swim.sampled: number sampled that were at swimup stage
+- dead.sampled: number dead that were kept as samples
+- lost.fish: number of fish found outside chambers and within the aquarium (i.e., escaped from the chamber)
+- eyed: number of eggs at the eyed stage (NOTE: During the experiment, we did not take consistent data on eyed stage, rather our best data for eyed stage are from our 5 day interval samplings)
+- eye.sampled: number of eggs sampled that were at the eyed stage
+- perc.subsample.eyed: percent of the 5-day sample that were at the eyed stage.
+- num.fry: daily count of the number of fry in each treatment chamber.
+- perc.hatched: Equal to num.fry divided by num.remaining(calc) times 100.
+_ num.hatchlings: number hatched but pre-swimup (lying on the bottom)
+- num.swimup: number hatched AND swimming
+- # eggs remaining: number of eggs (unhatched)
+- # organisms remaining: total eggs, hatched, and swimup individuals
+- num.remaining (calc): The number of live individuals remaining in the chamber after subtracting individuals removed because they were dead or sampled on that day.
+
+
+Keep the following columns:
+```{r SelectColumnsToKeep}
+keep_data <- sub_data2[c("TreatmentTank", "Location", "Family", "ID","Date", "days.post.fert","Initial.num.indiv.HG2023","num.fry","num.hatchlings", "perc.hatched.HG2023", "num.remaining.HG2023")]
+
+```
+
+
+Change the value in the Location column for "Oks 3" to "Sag" to indicate the Sagavanirktok population, which was sampled at location Oks 3.
+```{r ChangeLocationOks3toSag}
+# Change Location = Oks 3 to Sag
+keep_data$Location[keep_data$Location == "Oks 3"] <- "Sag"
+
+#Check for negative values
+min(keep_data$Initial.num.indiv.HG2023)
+keep_data$Initial.num.indiv.HG2023[keep_data$Initial.num.indiv.HG2023 < 0] <- 0
+keep_data$num.remaining.HG2023[keep_data$num.remaining.HG2023 < 0] <- 0
+
+head(keep_data$Location)
+tail(keep_data$Location)
+min(keep_data$Initial.num.indiv.HG2023)
+min(keep_data$num.remaining.HG2023)
+```
+
+
+Use dplyr to change Location from chr to factor:
+```{r ChangeLocationToFactor}
+library(dplyr)
+
+hatch_data <- keep_data %>%
+  mutate(Location = as.factor(Location)) # Convert Location to a factor
+
+hatch_data <- na.omit(hatch_data) # Removes rows with NAs
+str(hatch_data)
+
+```
+
+```{r RecalcPercHatched}
+keep_data$perc.hatched.HG2023 <- (keep_data$num.fry/keep_data$Initial.num.indiv.HG2023)*100
+
+keep_data <- na.omit(keep_data) # Removes rows with NAs
+
+str(keep_data)
+```
+
+```{r WriteCleanData}
+
+write.csv(keep_data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Hatch_Data_HG2023.csv")
+
+```
+
+
+```{r ReloadHatchDataHG2023}
+hdata <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Hatch_Data_HG2023.csv")
+```
+
+
+```{r CreatePlots}
+
+library(ggplot2)
+
+
+ggplot(data = hdata, mapping = aes(x = days.post.fert, y = num.hatchlings)) +
+  stat_ecdf(aes(colour=Location), lty="11") +
+  labs(x = "Day Post Fertilization", y = "Hatching Cumulative Distribution") +
+  #geom_line(aes(colour=Location)) +
+  #geom_line(y=0.5, col = "gray", alpha = 0.5) +
+	#facet_grid(TreatmentTank ~ .) +
+  facet_wrap(~ TreatmentTank, ncol = 1, labeller=as_labeller(c(T1 = "8°C", T2 = "12°C", T3 = "16°C") ), strip.position="right") +
+  theme_classic()
+
+
+
+ggsave("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/04_figures/CG_CumulativeHatchingPlot_HG2023.png")
+```
+
+```{r NewColumnPerc.Hatched}
+# Install and load the dplyr package
+
+library(dplyr)
+library(tidyr)
+
+# Create a new column with the next highest number for each group
+hdata <- hdata %>%
+  group_by(ID) %>%
+  mutate(PercHatchedConseq = ifelse(perc.hatched.HG2023 < lag(perc.hatched.HG2023), lag(perc.hatched.HG2023), perc.hatched.HG2023)) %>%
+  fill(PercHatchedConseq, .direction = "down")
+str(hdata)
+
+
+write.csv(hdata, "/Users/heidigolden/Desktop/CG_Hatch_Data_CheckThese.csv")
+```
+
+```{r CreatePlots}
+
+library(ggplot2)
+
+ggplot(data = hdata, mapping = aes(x = days.post.fert, y = perc.hatched.HG2023)) +
+  #stat_ecdf(aes(colour=Location), lty="11") 
+  geom_point(aes(colour=Location)) +
+  labs(x = "Day Post Fertilization", y = "Percent Hatched") +
+  #geom_line(y=0.5, col = "gray", alpha = 0.5) +
+	facet_grid(TreatmentTank ~ .) +
+  #facet_wrap(~ TreatmentTank, ncol = 1, labeller=as_labeller(c(T1 = "8°C", T2 = "12°C", T3 = "16°C") ), strip.position="right") +
+  theme_classic()
+
+
+
+#ggsave("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/04_figures/CG_PercentHatchedPerDayPlot_HG2023.png")
+```
+
+
+
+```{r MergeInitialNumber}
+init_num <- subset(hatch_data, days.post.fert == 0)
+
+init_num <- init_num[c("ID","Initial.num.indiv.calc")]
+
+new_hatch <- merge(hatch_data, init_num, by  = "ID")
+head(new_hatch)
+
+write.csv(keep_data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Hatch_Data_HG2023.csv")
+```

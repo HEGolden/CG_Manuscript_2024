@@ -1,0 +1,161 @@
+---
+title: "2017 Common Garden Population Site Map"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Introduction
+
+This code creates a site map of the Kuparuk River and Sagavanirktok River adult fish population capture locations for use in the Common Garden journal article.  
+
+
+```{r InstallMapbox}
+#remotes::install_github('qdread/qdrmapbox')
+library(qdrmapbox)
+```
+Go to Mapbox account and create an API access token to access the Raster Tiles API. 
+Save the token in a text file, containing only the token and nothing else.
+Paste the access token file address below:
+
+```{r AssignAccessToken}
+# Read the KML file
+set_mapbox_api_key("/Users/heidigolden/Dropbox/00_Consulting/ArcLTER/2023_ArcLTER/Reporting/2023_ArcLTER_Fish_Map/01_data/2023_ArcLTER_Fish_Sites_AccessToken.txt")
+```
+
+Download map tiles:
+Create bounding box
+assign bounding box to an object
+
+```{r DownloadTiles}
+zoom <- 15
+upper_left <- c(68.880342,	-149.716514)
+lower_right <- c(68.492554, -148.647533) 
+
+cg_tile_index <- find_tile_numbers(zoom = zoom, upper_left = upper_left, lower_right = lower_right)
+
+```
+
+Request Mapbox tiles from the API,
+Download tiles,
+Save tiles to jpg file.
+
+The function download_mapbox_tiles() downloads the tiles into a local directory given the index numbers we just found. Mapbox has low and high resolutions and JPEG quality settings of 70%, 80%, and 90%. I chose the highest in both cases. We saved the output of download_mapbox_tiles() to a data frame called cg_tile_df because it contains the file names of the downloaded tiles which we can use in the next step to georeference.
+```{r DownloadSaveTiles}
+
+download_dir <- '/Users/heidigolden/Dropbox/00_Consulting/ArcLTER/2023_ArcLTER/Reporting/2023_ArcLTER_Fish_Map/01_data/cgtiles'
+
+cg_tile_df <- download_mapbox_tiles(tile_numbers_mat = cg_tile_index, download_dir = download_dir, resolution = 'high', jpg_quality = 90)
+
+head(cg_tile_df, 2)
+```
+
+Request Mapbox tiles from the API,
+Download tiles,
+Save tiles to jpg file.
+
+The function download_mapbox_tiles() downloads the tiles into a local directory given the index numbers we just found. Mapbox has low and high resolutions and JPEG quality settings of 70%, 80%, and 90%. I chose the highest in both cases. We saved the output of download_mapbox_tiles() to a data frame called cg_tile_df because it contains the file names of the downloaded tiles which we can use in the next step to georeference.
+```{r DownloadSaveTiles}
+
+download_dir <- '/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/04_figures/cg_raster_tiles'
+
+cg_tile_df <- download_mapbox_tiles(tile_numbers_mat = cg_tile_index, download_dir = download_dir, resolution = 'high', jpg_quality = 90)
+
+head(cg_tile_df, 2)
+```
+
+
+Georeferencing the tiles:
+
+The function georeference_all_tiles() uses GDAL to georeference the tiles by associating the images with geographical locations. GDAL is a powerful system library for working with vector and raster geospatial data. The command gdal_translate turns the JPEGs into GeoTIFF files by telling GDAL the coordinates of the corners of each tile. The command build_virtual_raster() uses GDAL to mosaic the image tiles together into one “virtual raster,” or VRT file. This function internally calls the command gdalbuildvrt and creates a VRT file called cgimage.vrt in the same directory as the .tif files. The VRT file is a small text file that acts like a raster, though it’s only a pointer to the GeoTIFF tiles, so don’t delete the .tif files once the .vrt file is created.
+
+```{r GeoreferenceTiles}
+georeference_all_tiles(cg_tile_df)
+
+build_virtual_raster(cg_tile_df, file.path(download_dir, 'cgimage.vrt'))
+
+```
+
+Making the map:
+The map is made with ggplot. We use the function annotation_spatial() from the excellent ggspatial package to turn the raster to an “annotation” … so it can be plotted in its true red-blue-green colors but doesn’t affect the fill or color scales of any of the actual data we plot on the map.
+
+Load the packages we will need to make the map:
+```{r LoadMapPackages}
+library(sf)
+library(raster)
+library(ggspatial)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(stringi)
+require(rgdal)
+```
+
+Now read in the satellite imagery as a raster stack (it’s a stack because it actually has three layers: the red, green, and blue).
+
+```{r SatImage}
+cgimage_raster <- stack(file.path(download_dir, 'cgimage.vrt'))
+```
+
+Get data to plot:
+
+Use the sf package to read the kml file. A kml file is the unzipped versions of a kmz file. 
+Unzip the zipped package on your computer. 
+A kml file can contain multiple layers in a nested format. 
+Check to see which layer you want to use and specify it in the st_read function.
+
+## Site Locations
+Create a geospatial data frame for use in creating a site map for collection locations for the Kuparuk River and Sagavanirktok Arctic grayling populations used in the 2017 Common Garden experiment.
+
+```{r CreateSpatialDataset}
+
+Site = c("Kup", "Sag")
+Latitude = c(68.537169, 68.863069)
+Longitude = c(-149.248228, -148.844709)
+
+Sites <- as.data.frame(c(Site, Latitude, Longitude), header = TRUE) 
+
+cg_df <- st_as_sf(x = Sites,                         
+           coords = c("Longitude", "Latitude"),
+           crs = 4326)
+
+```
+
+
+
+```{r Plot_cg_Map}
+
+pallet <- scale_fill_manual(values = c("deeppink3", "dodgerblue"))
+
+gg <- ggplot() +
+  annotation_spatial(data = cgimage_raster, alpha = 0.9) +
+  geom_sf(data = cg_df, aes(fill=Site), colour="white",pch=21, size = 2) +
+  pallet +
+ coord_sf(crs = 4326) +
+  annotate('text', x = Inf, y = -Inf, label = '\u00a9 Mapbox \u00a9 OpenStreetMap', hjust = 1, vjust = -1, color = 'white', size = 2)+
+  labs(x="Longitude (WGS84)", y="Latitude",
+       title="Arctic Grayling Population Collection Sites (2017)") +
+   # spatial-aware automagic scale bar
+  annotation_scale(location = "bl",style = "ticks") +
+  theme_bw() +
+  # spatial-aware automagic north arrow
+  annotation_north_arrow(width = unit(.2,"in"), 
+                         pad_y = unit(.2, "in"),location = "bl", 
+                         which_north = "true")
+
+# Specify the map area beyond the default
+gg + coord_sf(xlim = c( -148.844709, -149.248228), ylim = c(68.537169, 68.863069))
+
+#upper_left <- c(68.880342,	-149.716514)
+#lower_right <- c(68.492554, -148.647533) 
+
+
+#ggsave("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/20231219_CommonGarden_Manuscript_Frontiers/20231219_CommonGarden_Manuscript_Frontiers_files/figure-latex/cgSites.pdf")
+
+```
+

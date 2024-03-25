@@ -1,0 +1,493 @@
+---
+title: "Hatch and Swimup Lengths and Yolk Volumes"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Introduction:
+We conducted a common garden experiment in 2017, which included calculating yolk volumes of eggs and larval fish and length measurements of larval fish over time and at key life history stages (i.e. egg hatching and larval swim-up). The goal of this script is to compare yolk volumes and fish lengths at both hatching and swim-up for two neutrally genetically distinct populations raised in a common garden experiment at three different temperatures (8, 12, and 16 degrees C). 
+
+The data contain information for other measurements, as well, including growth (length over time) and size of fish used in other common garden experiments, such as respiration and thermal preference. 
+
+Additionally, for growth determination, if we had enough larvae in the sample, we collected a subsample of individuals, fixed the subsample in 10% formalin, then preserved the subsample in 70% ethanol until the fish could be measured. If we did not have enough larvae in the sample, i.e. due to high mortality, the fish were measured while alive (live) and returned to their treatment container. We used a regression analysis to adjust for effects of ethanol preservation for the live fish measurements.
+
+
+Load the Data:
+The data set consists of fish lengths measured over time. We had three treatment groups (T1 = 16 C, T2 = 12 C, and T3 = 16 C) and two populations per treatment (K or Kup = Kuparuk, O or Oks3 = Lower Oksrukuyik). We also have fish that we raised from eggs (reared) and that we caught from the rivers soon after hatching (wild). 
+
+Here, a subset of the master data file is created to only examine fish at hatching and at swimup stages.
+
+```{r LoadLengthData}
+data <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Length_YolkVolume/00_CG_LengthYolkVolume_WokingFile_HG_2023.csv")
+
+ data$location <- as.factor(data$location)
+ data$alt.dpf <- as.numeric(data$alt.dpf)
+ data$days.post.fert <- as.numeric(data$days.post.fert)
+ data$Treatment <- as.factor(data$Treatment)
+ data$family <- as.factor(data$family)
+ data$disposition <- as.factor(data$disposition)
+ data$reared.wild <- as.factor(data$reared.wild)
+ data$measured.by <- as.factor(data$measured.by)
+ data$duplicate.to.remove <- as.factor(data$duplicate.to.remove)
+ data$yolk.vol <- as.factor(data$yolk.vol)
+ data$growth <- as.factor(data$growth)
+ data$ln.at.hatch <- as.factor(data$ln.at.hatch)
+ data$ln.at.swimup <- as.factor(data$ln.at.swimup)
+ data$respiration <- as.factor(data$respiration)
+ data$experiment <- as.factor(data$experiment)
+ 
+str(data)
+```
+Add New Yolk Sac Measurements to Main Data File:
+We measured the yolk sac width and height for individuals sampled during development to swim-up. We then calculated the yolk sac volume using a published formula given yolk width and height. I use the merge function to match the yolk sac measurements and volume estimate to each individual measured and add the data to our main data file.
+
+
+
+Filter out the ethanol preserved fish that had descicated due to ethanol evaporation:
+
+The ethanol preservative in a few of the samples evaporated over time, leaving the sample descicated. We measured these individuals anyway and labeled their "disposition" as "dried.ethanol." We will create a standard curve by purposely drying ethanol-preserved fish that we have already measured and re-measuring each individual after descication. We will regress the descicated fish measurements versus ethanol-preserved measurements to create a function that we can use to estimate pre-descication lengths in order to include these fish in our common garden experiment. 
+
+For now, however, we must remove the dried.ethanol fish from the data.
+
+```{r RemoveDriedEthanolFish}
+data <- subset(data, disposition != "dried.ethanol")
+str(data$disposition)
+```
+
+
+
+Create Data Sets:
+Hatch and Swim-up life-stage filtering:
+
+Below I create two subsets from the common garden length data file: hatch and swim-up. The "hatch" subset contains lengths of fish measured at time of hatching. The "swim-up" subset contains lengths of fish measured at the time the fish become positively bouyant and begin actively feeding. Prior to swim-up, the fish depend entirely on their yolk-sac for nurishment.
+
+
+Reared versus Wild filtering (not necessary here):
+
+The length data file contains information for reared (raised from eggs) and wild (caught from the rivers, soon after hatching) individuals. Here, we only want to consider reared fish, because these wild fish show growth bias from having experienced some growth in the rivers. Reared fish have only ever experienced common garden conditions and are free from enviromental phenotypic variation. 
+
+However, we do not need to subset wild and reared in this analysis, because by nature of the life-stages (hatch and swim-up) these subsamples of the data already contain only reared individuals.
+
+But, be aware that in other analyses the data will likely require filtering using wild and reared as factors.
+
+
+```{r subsetData}
+hatch.data <- subset(data, experiment == "hatch")
+swmup.data <- subset(data, experiment == "swimup")
+
+write.csv(hatch.data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Hatch_2023.csv")
+write.csv(swmup.data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Swimup_2023.csv")
+```
+
+Summary Function:
+This function summarizes data by groups, providing the statistics that you indicate. Here, I have chosen to summarize group means and standard errors. I will use this function later to create summary data sets graphs of the means with standard error bars. 
+
+```{r Data_SummaryFunction}
+#+++++++++++++++++++++++++
+# Function to calculate the mean and the standard deviation
+  # for each group
+#+++++++++++++++++++++++++
+# data : a data frame
+# varname : the name of a column containing the variable
+  #to be summarized
+# groupnames : vector of column names to be used as
+  # grouping variables
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      se = sd(x[[col]]/sqrt(length(x[[col]])), na.rm=TRUE),
+      n = length(x[[col]]))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+ return(data_sum)
+}
+```
+
+
+Reload the hatchling data set - This step should not be necessary, but I find that it ensures that the data maintain the appropriate structure. For example, "experiment" should now have only 1 factor, "hatch." And, if does.
+
+```{r ReloadHatch}
+hatch <- as.data.frame(read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Hatch_2023.csv"))
+
+str(hatch)
+
+```
+
+
+Here, I use the summary function to calculate mean length and standard error by location (Kup and Oks) and treatment (8, 12, and 16 degree tanks; T1, T2, and T3, respectively) for the "hatch" life-stage.
+```{r SummarizeHatchData}
+hatchdata.sum <- data_summary(hatch, varname="Length.mm", 
+                    groupnames=c("location", "Treatment"))
+hatchdata.sum
+head(hatchdata.sum)
+str(hatchdata.sum)
+#write.csv(hatch.sum, "/Users/heidigolden/Dropbox/_GenERRA_ Arctic Biology Institute/Proposal/Science Parts/DATA and Figures/Heidi Golden/CG_YOY_HatchLength.csv")
+
+
+```
+
+Reload the swim-up data set - Again, this step should not be necessary, but I find that it ensures that the data maintain the appropriate structure. For example, "experiment" should now have only 1 factor, "swimup." And, if does.
+
+```{r ReloadSwimup}
+swmup <- as.data.frame(read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Swimup_2023.csv"))
+
+str(swmup)
+
+```
+
+
+
+Here, I use the summary function to calculate mean length and standard error by location (Kup and Oks) and treatment (8, 12, and 16 degree tanks; T1, T2, and T3, respectively) for the "swim-up" life-stage.
+```{r SummarizeSwimupData}
+swmupdata.sum <- data_summary(swmup, varname="Length.mm", 
+                    groupnames=c("location", "Treatment"))
+swmupdata.sum
+head(swmupdata.sum)
+str(swmupdata.sum)
+
+#write.csv(swmup.sum, "/Users/heidigolden/Dropbox/_GenERRA_ Arctic Biology Institute/Proposal/Science Parts/DATA and Figures/Heidi Golden/CG_YOY_SwimupLength.csv")
+```
+
+
+The Fun Part:
+
+Below, I create plots for length at hatching and length at swim-up, presented side by side.
+
+```{r sidebysidePlots}
+library(ggplot2)
+library(gridExtra)
+
+p.hatchL <- ggplot(hatchdata.sum, aes(x=Treatment, y=Length.mm, group=location, color=location)) + ylim(9, 13) + ylab("Length (mm)") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=Length.mm-se, ymax=Length.mm+se), width=.2,
+                 position=position_dodge(0.05)) +
+    scale_color_manual(labels=c('Stream 3', 'Stream 1'), values = c("Sag" = "deepskyblue3",
+                                "Kup" ="red2")) +
+scale_x_discrete(breaks=c("T1","T2","T3"), labels=c(expression(paste("8 ",degree,"C")), expression(paste("12 ",degree,"C")), expression(paste("16 ",degree,"C"))))
+print.hatchL <- p.hatchL + theme(legend.position="top")
+p.hatchL
+
+p.swmupL <- ggplot(swmupdata.sum, aes(x=Treatment, y=Length.mm, group=location, color=location)) + ylim(9, 13) + ylab(" ") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=Length.mm-se, ymax=Length.mm+se), width=.2,
+                 position=position_dodge(0.05))  +
+    scale_color_manual(labels=c('Stream 3', 'Stream 1'), values = c("Sag" = "deepskyblue3",
+                                "Kup" ="red2")) +
+scale_x_discrete(breaks=c("T1","T2","T3"), labels=c(expression(paste("8 ",degree,"C")), expression(paste("12 ",degree,"C")), expression(paste("16 ",degree,"C"))))
+print.swimupL <- p.swmupL + theme(legend.position="top")
+p.swmupL
+
+##########################################
+
+# Create Then Add Labels to Plots:  A. Hatch and B.Swim-up
+
+library(grid)
+lab.hatchL <- grobTree(textGrob("A. Hatch", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+
+lab.swimL <- grobTree(textGrob("B. Swim-up", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+############################################
+
+
+doubleL.plot <- grid.arrange(print.hatchL +  annotation_custom(lab.hatchL), 
+                            print.swimupL +  annotation_custom(lab.swimL), ncol = 2)
+
+doubleL.plot
+
+```
+Graph Interpretation:
+Both Kup and Oks populations show plasticity to temperature, with different length at hatch and swim-up depending on the temperature at which fish are reared. However, the two populations also show local adaption to temperature via different reaction norms across temperature treatments for length at swim-up. 
+
+The Trade-Off:
+Most interestingly, notice that the Oks population does not grow between hatching and swim-up at 16 degrees C. One explanation might be due to a trade-off between faster growth and higher metabolism when energy (i.e. the yolk sac) is limited. Between hatching and swim-up, larval grayling depend entirely on their yolk sac and do not feed externally until they reach swim-up. From our respiration trials, we know that the Oks population has significantly higher respiration rate than the Kup population at 16 degrees C. Thus, the Oks population migth use yolk sac energy faster at higher temperature from egg development to hatching due to increased metabolic demands, resulting in little energy reserve for development to swim-up. After swim-up, however, larval Arctic grayling begin active feeding and we fed all of our common garden fish to satiation, effectively removing resource limitation. Once resources were no longer limited, the Oks fish reared at 16 degrees C rapidly increased their growth rate and "out grew" the Kup population, as can be seen in our common garden growth data.
+
+
+Analyze the Swimup Data:
+```{r ANOVA_Hatch}
+aov.hatchL <- aov(Length.mm ~ Treatment + location + Treatment*location, data = hatch)
+summary(aov.hatchL)
+```
+Treatment by location is not significantly different, so technically the graph A. Hatch shows phenotypic plasticity.
+
+Analyze the Swimup Data:
+```{r ANOVA_Swimup}
+aov.swmupL <- aov(Length.mm ~ Treatment + location + Treatment*location, data = swmup)
+summary(aov.swmupL)
+```
+Here, we have a significant Treatment by location interaction, which indicates local adaptation.
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% YOLK VOLUME ANALYSIS - HATCH and SWIM-UP
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+Here, I use the summary function to calculate mean yolk volume and standard error by location (Kup and Oks) and treatment (8, 12, and 16 degree tanks; T1, T2, and T3, respectively) for the "hatch" life-stage.
+```{r SummarizeHatchYolkData}
+hatchYolk.sum <- data_summary(hatch, varname="yolk.sac.volume", 
+                    groupnames=c("location", "Treatment"))
+
+str(hatchYolk.sum)
+
+```
+
+
+
+Here, I use the summary function to calculate mean yolk volume and standard error by location (Kup and Oks) and treatment (8, 12, and 16 degree tanks; T1, T2, and T3, respectively) for the "swim-up" life-stage.
+```{r SummarizeSwimupYolkData}
+swmupYolk.sum <- data_summary(swmup, varname="yolk.sac.volume", 
+                    groupnames=c("location", "Treatment"))
+
+str(swmupYolk.sum)
+
+```
+
+
+The Fun Part:
+
+Below, I create plots for length at hatching and length at swim-up, presented side by side.
+
+```{r sidebysidePlots}
+library(ggplot2)
+library(gridExtra)
+
+p.hatchY <- ggplot(hatchYolk.sum, aes(x=Treatment, y=yolk.sac.volume, group=location, color=location)) + ylim(0, 5) + ylab("Yolk Volume mm^3") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=yolk.sac.volume-se, ymax=yolk.sac.volume+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("T1","T2","T3"), labels=c(expression(paste("8 ",degree,"C")), expression(paste("12 ",degree,"C")), expression(paste("16 ",degree,"C"))))
+print.hatchY <- p.hatchY + theme(legend.position="top")
+
+
+p.swmupY <- ggplot(swmupYolk.sum, aes(x=Treatment, y=yolk.sac.volume, group=location, color=location)) + ylim(0, 5) + ylab(" ") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=yolk.sac.volume-se, ymax=yolk.sac.volume+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("T1","T2","T3"), labels=c(expression(paste("8 ",degree,"C")), expression(paste("12 ",degree,"C")), expression(paste("16 ",degree,"C"))))
+print.swimupY <- p.swmupY + theme(legend.position="top")
+
+##########################################
+
+# Create Then Add Labels to Plots:  A. Hatch and B.Swim-up
+
+library(grid)
+lab.hatchY <- grobTree(textGrob("A. Hatch", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+
+lab.swimY <- grobTree(textGrob("B. Swim-up", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+############################################
+
+
+doubleYolk.plot <- grid.arrange(print.hatchY +  annotation_custom(lab.hatchY), 
+                            print.swimupY +  annotation_custom(lab.swimY), ncol = 2)
+
+doubleYolk.plot
+
+```
+Graph Interpretation:  REDO THIS!!!! for yolk volume results
+Both Kup and Oks populations show plasticity to temperature, with different yolk volumes at hatch and swim-up depending on the temperature at which fish are reared. However, the two populations also show local adaption to temperature via different reaction norms across temperature treatments for yolk volume at swim-up. 
+
+The Trade-Off:  REDO THIS!!!! for yolk volume results
+Most interestingly, notice that yolk volume of the Oks population becomes depleted more rapidly between hatching and swim-up at 16 degrees C. One explanation might be due to a trade-off between faster growth and higher metabolism when energy (i.e. the yolk sac) is limited. Between hatching and swim-up, larval grayling depend entirely on their yolk sac and do not feed externally until they reach swim-up. From our respiration trials, we know that the Oks population has significantly higher respiration rate than the Kup population at 16 degrees C. Thus, the Oks population migth use yolk sac energy faster at higher temperature from egg development to hatching due to increased metabolic demands, resulting in little energy reserve for development to swim-up. After swim-up, however, larval Arctic grayling begin active feeding and we fed all of our common garden fish to satiation, effectively removing resource limitation. Once resources were no longer limited, the Oks fish reared at 16 degrees C rapidly increased their growth rate and "out grew" the Kup population, as can be seen in our common garden growth data.
+
+
+Analyze the Swimup Data:
+```{r ANOVA_HatchYolk}
+aov.hatchY <- aov(yolk.sac.volume ~ Treatment + location + Treatment*location, data = hatch)
+summary(aov.hatchY)
+```
+Treatment by location is not significantly different, so technically the graph A. Hatch shows phenotypic plasticity.
+
+Analyze the Swimup Data:
+```{r ANOVA_SwimupYolk}
+aov.swmupY <- aov(yolk.sac.volume ~ Treatment + location + Treatment*location, data = swmup)
+summary(aov.swmupY)
+```
+Here, we have a significant Treatment by location interaction, which indicates local adaptation.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%  Hatch to Swim-up by Treatment   %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Here, I use the summary function to calculate mean length and standard error by location (Kup and Oks) and Life Stage (hatch and swim-up) and by treatment (8, 12, and 16 degree tanks.
+
+
+```{r CreateStageDataSet}
+#Stopped here and merged the hatch and swmup data sets created above in Excel.
+
+stage <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/03_Analyses/04_HatchingSwimup/04_CG_HatchSwmup_20221202.csv")
+
+stage$location <- as.factor(stage$location)
+stage$Treatment <-as.factor(stage$Treatment)
+stage$family <- as.factor(stage$family)
+stage$days.post.fert <- as.factor(stage$days.post.fert)
+str(stage)
+```
+
+```{r SummarizeYolkStageData}
+stage.yolk <- data_summary(stage, varname="yolk.sac.volume", 
+                    groupnames=c("Treatment", "days.post.fert", "location"))
+
+stage.yolk
+str(stage.yolk)
+#write.csv(hatch.sum, "/Users/heidigolden/Dropbox/_GenERRA_ Arctic Biology Institute/Proposal/Science Parts/DATA and Figures/Heidi Golden/CG_YOY_HatchLength.csv")
+
+
+```
+Below, I create plots for yolk volume at hatching and swimup  at swim-up for each treatment, presented side by side.
+
+```{r sidebysidePlots}
+library(ggplot2)
+library(gridExtra)
+
+T1.yolk <- subset(stage.yolk, Treatment == "T1")
+T2.yolk <- subset(stage.yolk, Treatment == "T2")
+T3.yolk <- subset(stage.yolk, Treatment == "T3")
+
+
+p.T1.yolk <- ggplot(T1.yolk, aes(x=days.post.fert, y=yolk.sac.volume, group=location, color=location)) + ylim(0, 5) + ylab("Yolk Volume mm^3") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=yolk.sac.volume-se, ymax=yolk.sac.volume+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("Hatchling","SwimUp"), labels=c(expression(paste("Hatch")), expression(paste("Swim-up"))))
+print.T1.yolk <- p.T1.yolk + theme(legend.position="top")
+
+p.T2.yolk <- ggplot(T2.yolk, aes(x=days.post.fert, y=yolk.sac.volume, group=location, color=location)) + ylim(0, 5) + ylab(" ") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=yolk.sac.volume-se, ymax=yolk.sac.volume+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("Hatchling","SwimUp"), labels=c(expression(paste("Hatch")), expression(paste("Swim-up"))))
+print.T2.yolk <- p.T2.yolk + theme(legend.position="top")
+
+p.T3.yolk <- ggplot(T3.yolk, aes(x=days.post.fert, y=yolk.sac.volume, group=location, color=location)) + ylim(0, 5) + ylab(" ") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=yolk.sac.volume-se, ymax=yolk.sac.volume+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("Hatchling","SwimUp"), labels=c(expression(paste("Hatch")), expression(paste("Swim-up"))))
+print.T3.yolk <- p.T3.yolk + theme(legend.position="top")
+
+##########################################
+
+# Create Then Add Labels to Plots:  A. Hatch and B.Swim-up
+
+library(grid)
+lab.T1.yolk <- grobTree(textGrob("A. 8 Degrees C", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+
+lab.T2.yolk <- grobTree(textGrob("B. 12 Degrees C", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+
+lab.T3.yolk <- grobTree(textGrob("C. 16 Degrees C", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+############################################
+
+
+tripleYolk.plot <- grid.arrange(print.T1.yolk +  annotation_custom(lab.T1.yolk), 
+                            print.T2.yolk +  annotation_custom(lab.T2.yolk), 
+                            print.T3.yolk +  annotation_custom(lab.T3.yolk), 
+                            ncol = 3)
+
+tripleYolk.plot
+
+```
+Now, do the same thing for length...
+
+```{r SummarizeLengthStageData}
+stage.ln <- data_summary(stage, varname="Length.mm", 
+                    groupnames=c("Treatment", "days.post.fert", "location"))
+
+stage.ln
+str(stage.ln)
+#write.csv(hatch.sum, "/Users/heidigolden/Dropbox/_GenERRA_ Arctic Biology Institute/Proposal/Science Parts/DATA and Figures/Heidi Golden/CG_YOY_HatchLength.csv")
+
+
+```
+Below, I create plots for length at hatching and swimup  at swim-up for each treatment, presented side by side.
+
+```{r sidebysidePlots}
+library(ggplot2)
+library(gridExtra)
+
+T1.ln <- subset(stage.ln, Treatment == "T1")
+T2.ln <- subset(stage.ln, Treatment == "T2")
+T3.ln <- subset(stage.ln, Treatment == "T3")
+T1.ln
+
+p.T1.ln <- ggplot(T1.ln, aes(x=days.post.fert, y=Length.mm, group=location, color=location)) + ylim(10, 13) + ylab("Length (mm)") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=Length.mm-se, ymax=Length.mm+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("Hatchling","SwimUp"), labels=c(expression(paste("Hatch")), expression(paste("Swim-up"))))
+print.T1.ln <- p.T1.ln + theme(legend.position="top")
+
+p.T2.ln <- ggplot(T2.ln, aes(x=days.post.fert, y=Length.mm, group=location, color=location)) + ylim(10, 13) + ylab(" ") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=Length.mm-se, ymax=Length.mm+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("Hatchling","SwimUp"), labels=c(expression(paste("Hatch")), expression(paste("Swim-up"))))
+print.T2.ln <- p.T2.ln + theme(legend.position="top")
+
+p.T3.ln <- ggplot(T3.ln, aes(x=days.post.fert, y=Length.mm, group=location, color=location)) + ylim(10, 13) + ylab(" ") +
+  geom_line() +
+  geom_point(position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=Length.mm-se, ymax=Length.mm+se), width=.2,
+                 position=position_dodge(0.05)) +
+scale_x_discrete(breaks=c("Hatchling","SwimUp"), labels=c(expression(paste("Hatch")), expression(paste("Swim-up"))))
+print.T3.ln <- p.T3.ln + theme(legend.position="top")
+
+##########################################
+
+# Create Then Add Labels to Plots:  A. Hatch and B.Swim-up
+
+library(grid)
+lab.T1.ln <- grobTree(textGrob("A. 8 Degrees C", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+
+lab.T2.ln <- grobTree(textGrob("B. 12 Degrees C", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+
+lab.T3.ln <- grobTree(textGrob("C. 16 Degrees C", x=0.1,  y=0.95, hjust=0,
+  gp=gpar(col="black", fontsize=13)))
+############################################
+
+
+tripleLn.plot <- grid.arrange(print.T1.ln +  annotation_custom(lab.T1.ln), 
+                            print.T2.ln +  annotation_custom(lab.T2.ln), 
+                            print.T3.ln +  annotation_custom(lab.T3.ln), 
+                            ncol = 3)
+
+tripleLn.plot
+
+```

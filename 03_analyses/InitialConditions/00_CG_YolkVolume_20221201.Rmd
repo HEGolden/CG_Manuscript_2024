@@ -1,0 +1,204 @@
+----
+title: "Yolk Volume Estimates"
+author: "Heidi Golden"
+date: "11/03/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+CHANGE TEXT FROM LENGTHS TO YOK VOLUMES
+
+Introduction:
+We conducted a common garden experiment in 2017, which included estimating yolk volume for eggs collected prior to fertilization and as yolk volume was depleted over time as larval fish developed. We collected a subsample of individuals from each family within each treatment tank, fixed the subsample in 10% formalin, then preserved the subsample in 70% ethanol until the yolksac dimensions could be measured. 
+
+Egg and larval yolk volumes were measured after being preserved in ethanol.
+
+
+
+Load the Data:
+The data set consists of fish lengths measured over time. We had three treatment groups (T1 = 16 C, T2 = 12 C, and T3 = 16 C) and three populations (locations) per treatment (K or Kup = Kuparuk, O or Oks = Lower Oksrukuyik, and OZ or OksZev = Upper Oksrukuyik). We also have fish that we raised from eggs (reared) and that we caught from the rivers soon after hatching (wild). 
+
+```{r LoadYolkVolumeData}
+yvol <- read.csv("/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/z_2023_archive/00_Last_CommonGarden_Folders/02_original_data/Length-YolkVolume/00_CG_LnYolkVolLifeStage_WokingFile_HG_2022.csv")
+
+ yvol$location <- as.factor(yvol$location)
+ yvol$days.post.fert <- as.numeric(yvol$days.post.fert)
+ yvol$Treatment <- as.factor(yvol$Treatment)
+ yvol$family <- as.factor(yvol$family)
+ yvol$disposition <- as.factor(yvol$disposition)
+ yvol$reared.wild <- as.factor(yvol$reared.wild)
+ yvol$measured.by <- as.factor(yvol$measured.by)
+ yvol$duplicate.to.remove <- as.factor(yvol$duplicate.to.remove)
+ yvol$yolk.vol <- as.factor(yvol$yolk.vol)
+ yvol$growth <- as.factor(yvol$growth)
+ yvol$ln.at.hatch <- as.factor(yvol$ln.at.hatch)
+ yvol$ln.at.swimup <- as.factor(yvol$ln.at.swimup)
+ yvol$respiration <- as.factor(yvol$respiration)
+ yvol$experiment <- as.factor(yvol$experiment)
+ 
+str(yvol)
+```
+
+First, filter out the ethanol preserved eggs and/or fish that had descicated due to sample ethanol evaporation:
+
+The ethanol preservative in a few of the samples evaporated over time, leaving the sample descicated. We measured these individuals anyway and labeled their "disposition" as "dried.ethanol." We will create a standard curve by purposely drying ethanol-preserved fish that we have already measured and re-measuring each individual after descication. We will regress the descicated fish measurements versus ethanol-preserved measurements to create a function that we can use to estimate pre-descication lengths in order to include these fish in our common garden experiment. 
+
+For now, however, we must remove the dried.ethanol fish from the data.
+
+```{r RemoveDriedEthanolFish}
+yvol <- subset(yvol, disposition != "dried.ethanol")
+str(yvol$disposition)
+```
+
+
+Here I create a dataset containing "reared" fish (not wild) and length data with "live" fish lengths corrected with the regression formula to approximate shrinkage due to ethanol preservation.
+This dataset also excludes fish from the OksZev location
+```{r subsetData}
+data1 <- subset(yvol, reared.wild == "reared" & location != "OksZev" & experiment == "yolksac")
+str(data1)
+
+newd <- data1[ c("location", "days.post.fert", "Treatment", "family", "indiv.1to15", "yolk.sac.volume")]
+head(newd)
+
+
+## IF any changes are made to the original data sheet, or within this script
+### You MUST adjust this file below in EXCEL prior to continuing with this R Code.
+
+#write.csv(newd, "/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/01_YolkVolumeDataSet-ForR-20221202.csv")
+## Open in Excel and duplicate Post-Fert Egg Volumes (days post fert = 0) for all Treatments
+# D0 volumnes were prior to assigning treatment groups, so is the same for all treatment.
+```
+
+```{r ReloadAdjustedDataChangeCharToFact}
+
+### Reload adjusted data here for graphing:
+
+adj.data <- read.csv("/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/02_Adjusted-YolkVolumeDataSet-ForR-20221202.csv")
+library(dplyr)
+
+cols <- c("location", "Treatment", "family", "indiv.1to15")
+
+adj.data <- adj.data %>%
+    mutate_at(cols, list(~factor(.)))
+adj.data <- as.data.frame(adj.data)
+str(adj.data)
+
+```
+
+## Plots of Initial Egg/Yolk Volumes
+
+```{r PlotInitialEggVol}
+#install.packages("tidyverse")
+#install.packages("hrbrthemes")
+#install.packages("viridis")
+#install.packages("ggeasy")
+
+# Libraries
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+library(ggeasy)
+
+#  dataset
+eggs <- subset(adj.data, days.post.fert == 0)
+str(eggs)
+
+# Plot
+
+eggs %>% 
+  ggplot(aes(x=location, y=yolk.sac.volume, fill=location)) + 
+  geom_boxplot(width=0.5,lwd=0.5) +
+  geom_jitter(width=0.15, size = 0.05) +
+  theme_ipsum() +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=11)) + 
+  labs(x = "Population", y = "Volume (mm^3") +
+  ggtitle("Initial Egg Volume") +
+  ggeasy::easy_center_title()
+
+
+# Use this to print the plot to the Figures Folder:
+# png("/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/04_figures/05_CG_InitialYolkVolume_Graph_20221210.png")
+
+# dev.off
+
+```
+
+```{r ANOVA_InitialEggVolume}
+
+# Perform ANOVA for initial yolk volume by location
+aov_test <- aov(yolk.sac.volume ~ location, data = eggs)
+  summary(aov_test)
+
+
+```
+
+
+
+YOLK VOLUME DATA - Linear model.
+```{r lmyvol}
+new.lm <- lm(yolk.sac.volume ~ 0 + days.post.fert * location * Treatment, data = adj.data)
+
+summary(new.lm)
+```
+
+CREATE SUMMARY STATISTICS:
+
+Function to Summarize the Data:
+```{r SummarizeFunction}
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      n = length(x[[col]]), 
+      se = sd(x[[col]])/sqrt(length(x[[col]])), na.rm=TRUE)
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+```
+
+
+
+Summarize the Data:
+
+```{r SummarizeData}
+
+sum.data <- data_summary(adj.data, varname = "yolk.sac.volume", 
+                    groupnames = c("location", "days.post.fert", "Treatment"))
+
+#sum.data$days.post.fert <- as.numeric(sum.data$days.post.fert)
+sum.data
+#write.csv(sum.data, "/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data03_CG_SumStats_yvol_20221201.csv")
+```
+
+
+Plot Length Over Time (with "live" converted to "ethanol" estimated length):
+
+```{r Plot_reared}
+library(ggplot2)
+
+p <- ggplot(data = sum.data, aes(x = days.post.fert, y = yolk.sac.volume, color = location)) + xlim(0, 40) + ylim(0,25.5) + geom_point() + geom_line() + geom_errorbar(aes(ymin=yolk.sac.volume-se, ymax=yolk.sac.volume+se), width=.2, )
+
+p +  facet_wrap(~ Treatment, labeller = labeller(Treatment = function(string) paste(string, "°C"))) + labs(title = "Yolk Volume", y = "Yolk Volume (mm^3)", x = "Days Post Fertilization") +
+  theme_minimal()
+
+```
+
+
+
+
+Analyze the Data:
+```{r ANOVA_EstLive}
+aov.est <- aov(yolk.sac.volume ~ days.post.fert + location * Treatment, data = newd)
+summary(aov.est)
+```
+

@@ -1,0 +1,652 @@
+---
+title: "Common Garden Respiration Analysis 2022-07-21"
+author: "Heidi Golden"
+date: "7/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+The 2017 Common Garden experiment, where we reared individual Arctic grayling in families created by strip-spawning Adult fish from different populations (Kuparuk River, Sagavanirktok River (aka lower Oksrukuyik or Oks3)), included testing for differences in metabolic rates among populations to temperature.
+
+We reared all families of individuals from eggs to the experiment's termination at three different temperatures (8C, 12C, and 16C) in large thermally controlled tanks at Toolik Field Station. Near experiment termination, we conducted respiration trials at the three different temperatures, acclimating all individuals regardless of rearing temperature to the test temperature prior to each respiration run. We then performed intermittent-flow respirometry by periodically (every 5 minutes) turning on and off a circulatory pump within the respirometer. This circulated water throughout the respirometer and re-oxygenated water within the test chamber. For each individual, we estimated to the slope of the regression for oxygen concentration over time at multiple intervals during the trial. These slopes were then averaged to obtain an estimate of oxygen consumption rate for each individual tested.
+
+Three files are necessary to compile the respiration experiment data into one file for analysis.
+
+### Read Original Data:
+The data files comes from the first, second, and third sheets in the CG_Respiration_Worksheet_2017-2023.xlsx file, located in the 00_raw_data folder. Below, I read in each of these sheets from the data spreadsheet file into R as .csv files using the 'readxl' and' 'writexl' packages. 
+
+The 'slopes' dataframe contains the respiration experiment regressions and correlations obtained from the LoggerPro .qmbl files and includes the following: Run,	Tank,	qmbl_file_DO_number,	back_slope,	back_slope_corr,	slope1,	corr_slope1,	slope2,	corr_slope2,	slope3,	corr_slope3.
+
+The 'probe_do'dataframe contains DO measurements recorded in the respiration data notebook during the experiment for each Run, Tank, and Probe and also contains the LoggerPro DO number for each Run and Tank. This file links the Respiration Experiment Probes to the DO regression numbers in LoggerPro  and includes the following: Run,	Tank,	Probe,	data_notebook_time,	data_notebook_DO,	qmbl_file_DO_number, and	qmbl_file.
+
+The 'fish_info' dataframe contains fish information, including Location,	Family,	reared_wild,	TreatmentTank,	CG_temp	Resp_temp,	Run,	Tank,	Probe,	Vr_ml,	Va_ml,	length_mm,	Ma_g, and	num_per_resp. 
+
+
+## Load Libraries and Data File
+The following libraries are necessary for graphing and modeling.
+
+```{r LoadLibraries}
+library(ggplot2)
+library(lattice)
+library(dplyr)
+library(nlme)
+```
+
+
+```{r SubsetOriginalData, echo=FALSE, warning=FALSE}
+# If necessary, install the required packages for reading and writing .xlsx to .csv
+#install.packages("readxl")
+#install.packages("writexl")
+
+# Load the required packages for reading and writing .xlsx to .csv
+library(readxl)
+library(writexl)
+
+########################################
+# Use the read_excel() function from the readxl package to read the .xlsx file sheets 1, 2, and 3. 
+# Specify the file path and set sheet = 1 to read the first sheet:
+
+slopes <- as.data.frame(read_excel("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Respiration/CG_Respiration_Worksheet_2017-2023.xlsx", sheet = 1))
+
+probe_do <- as.data.frame(read_excel("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Respiration/CG_Respiration_Worksheet_2017-2023.xlsx", sheet = 2))
+
+fish_info <- as.data.frame(read_excel("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Respiration/CG_Respiration_Worksheet_2017-2023.xlsx", sheet = 3))
+
+```
+
+I first merge the fish_info with the probe_do by 'run_tank_probe' column, which provides a unique identifier for each row (fish) based on Run, Tank, and Probe information. In particular, this process adds the LoggerPro regression DO numbers to the resulting file for each combination of Run, Tank, and Probe.
+
+```{r MergeTheFiles}
+library(dplyr)
+
+fish_probe_do <- left_join(fish_info, probe_do, by = c("Run", "Tank", "Probe"))
+
+# Check the structure:
+str(fish_probe_do)
+
+```
+
+```{r MergeLoggerProRegressions}
+
+resp <- left_join(fish_probe_do, slopes, by = c("Run", "Tank", "qmbl_file_DO_number"))
+
+```
+
+The data contain the following headers:
+- Location -	Source river from which parents of each family were captured
+- Family -	Family of individual fish created by mating one male with each of two females to be reared in the Common Garden under three different temperature conditions (8, 12, and 16 degrees)
+- reared_wild -	Individuals in the common garden experiment were either "reared" as described above for use in the common garden experiment, or captured from the river "wild" as larval fish (used for comparison with reared fish only)
+- TreatmentTank -	Three temperature treatment tanks were maintained throughout the common garden experiment: T1 = 8 degrees C, T2 = 12 degrees C, and T3 = 16 degrees C.
+- CG_temp -	Three temperature treatment tanks were maintained throughout the common garden experiment: T1 = 8 degrees C, T2 = 12 degrees C, and T3 = 16 degrees C.
+- Resp_temp -	Fish respiration trials were conducted under three different temperatures: 8, 12, and 16 degrees C
+- Run -	One run contains 11 (or 12) respiration trials. There were 11 (or 12) respirometers and ODO probes in total and different runs were necessary to obtain data for the respiration experiment
+- Tank -	For temperature controlled tanks were maintained within the Toolik Field Station's incubation facility. Each tank contained 3 (or 2) respirometers. Respiration temperatures were 8, 12, or 16 degrees C
+- Probe -	Each probe was numbered 1 - 12, such that Tank 1 contained probe 1, 2, and 3; tank 2 contained probes 4, (5), and 6, tank 3 contained probes 7, 8, and 9; and tank 4 contained probes 10, 11, and 12.
+- Vr_ml -	The volume of the respirometer (mls) was estimated as the mean volume calculated  from  5 total volume measurements for each respirometer (listed in the RespirometerVolumes sheet)
+- Va_ml -	Volume of the animal (ml) was estimated from the mass of the animal in grams
+- length_mm -	Length of the animal (if measured) in mm
+- Ma_g -	Mass of the animal in grams
+- num_per_resp -	Number of individuals within each respirometer, usually just 1 individual, additional individuals were included per respirometer when single individuals were too small to measure respiration directly.
+- Comments.x -	Any noteworthy comments regarding runs, fish, data, etc.
+- data_notebook_time
+- data_notebook_DO
+- qmbl_file_DO_number -	The probes were connected to the ODO meter ports and displayed in the .qmbl files as DO, DO2, and DO3.
+- qmbl_file - file name of the LoggerPro file used to calculate regression slopes and correlation coeficients.
+- back.slope -	The background slope (i.e., from bacteria or other organisms within the respirometer that contribute to O2 depletion) was calculated in LoggerPro from the .qmbl file regression prior to adding fish to respirometer.
+- back_slope_corr - the background slope's correlation coefficient.
+- slope1 -	Slope 1 was calculated in LoggerPro from a .qmbl regression after adding fish to respirometer and after initial acclimation time
+- corr_slope1 - Slope 1's correlation coefficient.
+- slope2 -	Slope 2 was calculated in LoggerPro from a .qmbl regression after adding fish to respirometer and after initial acclimation time
+- corr_slope2 - Slope 2's correlation coefficient.
+- slope3 -	Slope 3 was calculated in LoggerPro from a .qmbl regression after adding fish to respirometer and after initial acclimation time
+- corr_slope3 - Slope 3's correlation coefficient.
+- Comments.y - comments from the LoggerPro regression file
+
+## Calculate VO2
+
+In the code below, I calculate oxygen consumption by fish (VO2) using the formula: 
+VO2 = (((-1 x DO_Slope_mg_L_min) x (Vr.ml - Va.ml) x (1/1000)) x 60)/Ma.g
+
+
+I explore the data, graphs, and models for differences in oxygen consumption among populations (i.e., local adaptation and/or phenotypic plasticity) at different rearing and test temperatures.
+
+The different populations reared from eggs (reared_wild = reared) include the Kuparuk River (Kup) and the Sagavanirktok River (Oks3). We also included some larval fish that were collected directly from the rivers, i.e. not via strip-spawning and rear from eggs by us, (reared_wild = wild). The wild individuals were from three populations, including the Kuparuk River (Kup), the Sagavanirktok River (Oks3) and the Oksrukuyik Creek headwaters (OksZev).
+
+Because wild individuals experienced non-controlled temperature conditions prior to capture by us, we do not consider them when testing for local adaptation among populations and exclude this subset of individuals from our analyses.
+
+
+
+
+This summary function is useful for creating summary statistics.
+```{r CreateSummaryFunction}
+
+############## Start Function #######################
+
+# Function to summarize the data: (http://www.sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization)
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE),
+      se = sd(x[[col]])/sqrt(length(x[[col]])), na.rm=TRUE)
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+############# End Function ##########################
+```
+
+
+```{r SubsetRemoveWild}
+
+
+library(dplyr)
+resp <- resp %>% mutate_at(c('Location',	'Family',	'reared_wild',	'TreatmentTank',	'CG_temp', 'Resp_temp',	'Run',	'Tank',	'Probe',	'qmbl_file_DO_number'), as.factor)
+
+
+str(resp)
+
+
+```
+
+
+To calculate VO2, the following objects must be created to calculate VO2
+mean_slope = The average of Slope1, Slope2, and Slope3
+DO_Slope_mg_L_min = mean_slope - back_slope
+And finally:
+
+VO2 = (((-1 x DO_Slope_mg_L_min) x (Vr.ml - Va.ml) x (1/1000)) x 60)/Ma.g
+
+```{r CreateColumnsForVO2Calculations}
+
+library(dplyr)
+
+data <- resp %>%
+  mutate(mean_slope = (slope1 + slope2 + slope3) / 3) %>%
+  mutate(DO_Slope_mg_L_min = mean_slope - back_slope) %>%
+  mutate(VO2 = ((-1 * DO_Slope_mg_L_min) * (Vr_ml - Va_ml) * (1/1000) * 60) / Ma_g)
+
+# Notices one individual that was too small - i.e., background slope was greater than respiration slope!
+# Remove all rows with background slope greater than mean slope. - Here slope is negative of 
+
+data <- subset(data, (mean_slope < back_slope)) # Mean slope should be more negative than Background Slope.
+
+str(data)
+
+write.csv(data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Respiration_data_2023.csv")
+```
+
+
+## Analysis for Reared Fish
+Subset the data to exclude the 'wild' fish (for now). Only fish from families created for use in the common garden experiment are retained for these analyses.
+
+```{r SubsetNoWild}
+data <- subset(data, reared_wild == "reared")
+
+```
+
+
+```{r FirstModel_BOM}
+
+BOM <- lm(VO2 ~ Location*Resp_temp*CG_temp, data=data)
+summary(BOM)
+
+
+## Part 1:  BOM = all fixed effects included; Optimize the Random Part using REML.
+```
+
+```{r ExploreMixedEffectsModels}
+Rand1 <- lme(VO2 ~ Resp_temp * Location * CG_temp, 
+             random = ~1 | Family, data=data, method = "REML")
+summary(Rand1)
+
+Rand2 <- lme(VO2 ~ Resp_temp * Location * CG_temp, 
+             random = ~1 | Probe, data=data, method = "REML")
+summary(Rand2)
+
+Rand3 <- lme(VO2 ~ Resp_temp * Location * CG_temp, 
+             random = Probe ~1 | Family, data=data)
+summary(Rand3)
+```
+
+
+```{r OptimizeFixedComponent}
+#################### Optimize Fixed Component ############################
+
+Fix1 <- lme(VO2 ~ Resp_temp, 
+             random = ~1 | Run, data=data, method = "ML")
+summary(Fix1)
+
+Fix2 <- lme(VO2 ~ Resp_temp * CG_temp, 
+            random = ~1 | Run, data=data, method = "ML")
+summary(Fix2)
+
+Fix3 <- lme(VO2 ~ Resp_temp * CG_temp * Location, 
+            random = ~1 | Run, data=data, method = "ML")
+summary(Fix3)
+
+Fix4 <- lme(VO2 ~ CG_temp, 
+            random = ~1 | Run, data=data, method = "ML")
+summary(Fix4)
+
+```
+
+```{r PlotVO2_Graph1}
+# Load the required packages
+library(ggplot2)
+library(dplyr)
+
+
+# Calculate mean and standard error for each group
+summary_df <- data %>%
+  dplyr::group_by(TreatmentTank, Location, Resp_temp) %>%
+  dplyr::summarise(Mean = mean(VO2),
+            SE = sd(VO2) / sqrt(length(VO2)))
+
+# Create the graph
+ggplot(summary_df, aes(x = Resp_temp, y = Mean, color = Location)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = Mean - SE, ymax = Mean + SE), width = 0.2) +
+  geom_line(aes(group = Location), size = 1, alpha = 0.7) +
+  facet_wrap(~ TreatmentTank, nrow = 1) +
+  labs(x = "Respiration Temperature (C)", y = "Mean", color = "Location") +
+  theme_bw()
+
+
+```
+```{r PlotVO2_Graph2}
+# Load the required packages
+library(ggplot2)
+library(dplyr)
+
+
+# Calculate mean and standard error for each group
+summary_df2 <- data %>%
+  dplyr::group_by(Resp_temp, Location, TreatmentTank) %>%
+  dplyr::summarise(Mean = mean(VO2),
+            SE = sd(VO2) / sqrt(length(VO2)))
+
+
+# Create the graph
+ggplot(summary_df2, aes(x = TreatmentTank, y = Mean, color = Location)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = Mean - SE, ymax = Mean + SE), width = 0.2) +
+  geom_line(aes(group = Location), size = 1, alpha = 0.7) +
+  facet_wrap(~ Resp_temp, nrow = 1) +
+  labs(x = "Common Garden Treatment Temperature (C)", y = "Mean", color = "Location") +
+  theme_bw()
+
+
+```
+
+## AIC Comparision for Reared Fish
+```{r AIC_Comparisions_Reared}
+#################  Start AICc   ###################################
+
+options(na.action = "na.fail")
+
+#data(Orthodont, package = "nlme")
+
+# Fit model by REML
+BOM <- lme(VO2 ~ Resp_temp*Location*CG_temp, random = ~ 1|Family, data=data, method = "REML")
+# fm2 <- lme(distance ~ Sex*age, data = Orthodont,
+#           random = ~ 1|Subject / Sex, method = "REML")
+#install.packages("AICcmodavg")
+#install.packages("MuMIn")
+#install.packages("nlme")
+
+library(AICcmodavg)
+library(MuMIn)
+library(nlme)
+
+
+AICc(BOM)
+
+# Model selection: ranking by AICc using ML
+mBOM <- dredge(BOM, trace = TRUE, rank = "AICc", REML = FALSE)
+#ms2 <- dredge(fm2, trace = TRUE, rank = "AICc", REML = FALSE)
+
+(attr(mBOM, "rank.call"))
+#(attr(ms2, "rank.call"))
+
+# Get the models (fitted by REML, as in the global model)
+BOM_List <- get.models(mBOM, 1:4)
+#fmList <- get.models(ms2, 1:4)
+
+# Because the models originate from 'dredge(..., rank = AICc, REML = FALSE)',
+# the default weights in 'model.avg' are ML based:
+summary(model.avg(BOM_List))
+#summary(model.avg(fmList))
+
+# the same result:
+model.avg(BOM_List, rank = "AICc", rank.args = list(REML = FALSE))
+#model.avg(fmList, rank = "AICc", rank.args = list(REML = FALSE))
+
+
+################ Finished AICc  ##################################
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############# Create Subsets RearingCondition = CG or Wild  ##########################
+
+library(lattice)
+
+xyplot(abs.VO2 ~ factor(Resp.temp) | factor(CG.temp), data=data, pch=16,layout=c(3,1),
+       groups = factor(River,labels=c("Kup","Sag")),
+       type=c("p","g"),
+       jitter.x = TRUE,
+       xlab = "Acclimation Temperature (C)",
+       ylab = "Oxygen Consumption (??)",
+       auto.key = TRUE)
+
+data
+
+CGdata <- subset(data, RearingCondition == "CG")
+CGdata
+CGrear <- aov(VO2 ~ Resp.temp*CG.temp*River, data=CGdata)
+summary(CGrear)
+
+###############  t-test for ###################
+#Create groups
+resp16 <- subset(CGdata, Resp.temp == 16)
+CGresp16 <- subset(resp16, CG.temp == 16)
+CGresp16
+
+Oks16 <- subset(CGresp16, River == "Oks3")
+Oks16.VO2 <- Oks16$abs.VO2
+Kup16 <- subset(CGresp16, River == "Kup")
+Kup16.VO2 <- Kup16$abs.VO2
+
+# independent 2-group t-test
+t.test(Oks16.VO2, Kup16.VO2) # where y1 and y2 are numeric 
+
+#install.packages("stats")
+library(stats)
+wilcox.test(Oks16.VO2, Kup16.VO2)
+######### End t-test  ##############################
+
+#install.packages("lattice")
+library(lattice)
+CGdata$CG.temp <- as.factor(CGdata$CG.temp)
+CGdata$Resp.temp <- as.factor(CGdata$Resp.temp)
+xyplot(VO2 ~ Resp.temp | CG.temp, groups=River, data=CGdata,
+       auto.key =
+         list(title = "River",
+              x = 1, y=0, corner = c(1,0),
+              border = TRUE, lines = TRUE))
+
+
+Wdata <- subset(data, RearingCondition == "Wild")
+Wdata$CG.temp <- as.factor(Wdata$CG.temp)
+Wdata$Resp.temp <- as.factor(Wdata$Resp.temp)
+Wdata
+modWild <- aov(VO2 ~ Resp.temp*River, data=Wdata)
+summary(modWild)
+
+#install.packages("lattice")
+#library(lattice)
+
+xyplot(VO2 ~ Resp.temp, groups=River, data=Wdata,
+       auto.key =
+         list(title = "River",
+              x = 1, y=0, corner = c(1,0),
+              border = TRUE, lines = TRUE))
+
+############# End Section: ##########################
+
+##########  Start Section: Subsets ALL to CG.temp 8, 12, 16  #######################
+# Subset ALL (CG and Wild) data to CG.temp
+data8 <- subset(data, Resp.temp == "8")
+data12 <- subset(data, Resp.temp == "12")
+data16 <- subset(data, Resp.temp == "16")
+
+
+
+
+##############################################################
+#install.packages("ggplot2")
+#library(ggplot2)
+
+# summarize and plot CG.temp 8 degrees
+df8 <- data_summary(data8, varname="VO2", 
+                    groupnames=c("CG.temp", "River"))
+
+df8
+
+# Plot mean VO2 with sd
+p8<- ggplot(df8, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-50, 0)
+
+print(p8)
+
+##############################################################
+# summarize and plot CG.temp 12 degrees
+df12 <- data_summary(data12, varname="VO2", 
+                    groupnames=c("CG.temp", "River"))
+
+df12
+
+# Plot mean VO2 with sd
+p12<- ggplot(df12, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-50, 0)
+
+print(p12)
+
+##############################################################
+# summarize and plot CG.temp 16 degrees
+df16 <- data_summary(data16, varname="VO2", 
+                     groupnames=c("CG.temp", "River"))
+
+df16
+
+# Plot mean VO2 with sd
+p16<- ggplot(df16, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-55, 0)
+
+print(p16)
+
+
+##############################################################
+############## CG Reared Only ################################
+##############################################################
+
+# Subset data to CG.temp
+CGdata8 <- subset(data8, RearingCondition == "CG")
+CGdata12 <- subset(data12, RearingCondition == "CG")
+CGdata16 <- subset(data16, RearingCondition == "CG")
+
+
+
+
+##############################################################
+#install.packages("ggplot2")
+#library(ggplot2)
+
+# summarize and plot CG.temp 8 degrees
+CG8 <- data_summary(CGdata8, varname="VO2", 
+                    groupnames=c("CG.temp", "River"))
+
+CG8
+
+# Plot mean VO2 with sd
+pCG8<- ggplot(CG8, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-50, 0)
+
+print(pCG8)
+
+##############################################################
+# summarize and plot CG.temp 12 degrees
+CG12 <- data_summary(CGdata12, varname="VO2", 
+                     groupnames=c("CG.temp", "River"))
+
+CG12
+
+# Plot mean VO2 with sd
+pCG12<- ggplot(CG12, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-50, 0)
+
+print(pCG12)
+
+##############################################################
+# summarize and plot CG.temp 16 degrees
+CG16 <- data_summary(CGdata16, varname="VO2", 
+                     groupnames=c("CG.temp", "River"))
+
+CG16
+
+# Plot mean VO2 with sd
+pCG16<- ggplot(CG16, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-55, 0)
+
+print(pCG16)
+
+
+##############################################################
+############## Wild Reared Only ##############################
+##############################################################
+
+################################################################
+# Re-read data
+data <- read.csv("YOY_Respiration_Worksheet_2017_RespCalc.csv")
+
+
+
+
+# Subset data to CG.temp
+Wdata8 <- subset(data, Resp.temp == 8 & RearingCondition == "Wild")
+Wdata12 <- subset(data, Resp.temp == 12 & RearingCondition == "Wild")
+Wdata16 <- subset(data, Resp.temp == 16 & RearingCondition == "Wild")
+Wdata8$Resp.temp
+Wdata12$Resp.temp
+Wdata16$Resp.temp
+##############################################################
+#install.packages("ggplot2")
+#library(ggplot2)
+
+# summarize and plot CG.temp 8 degrees
+Wdf8 <- data_summary(Wdata8, varname="VO2", 
+                    groupnames=c("CG.temp", "River"))
+
+Wdf8
+Wdf8$se[4] <- 0
+
+
+# Plot mean VO2 with sd
+Wp8<- ggplot(Wdf8, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-50, 0)
+
+print(Wp8)
+
+##############################################################
+# summarize and plot CG.temp 12 degrees
+Wdf12 <- data_summary(Wdata12, varname="VO2", 
+                     groupnames=c("CG.temp", "River"))
+
+Wdf12
+
+# Plot mean VO2 with sd
+Wp12<- ggplot(Wdf12, aes(x=CG.temp, y=VO2, group=River, color=River, xlim = 8,16)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-50, 0)
+
+print(Wp12)
+
+##############################################################
+# summarize and plot CG.temp 16 degrees
+Wdf16 <- data_summary(Wdata16, varname="VO2", 
+                     groupnames=c("CG.temp", "River"))
+
+Wdf16
+
+# Plot mean VO2 with sd
+Wp16<- ggplot(Wdf16, aes(x=CG.temp, y=VO2, group=River, color=River)) + 
+  geom_line() +
+  geom_point()+
+  geom_errorbar(aes(ymin=VO2-se, ymax=VO2+se), width=.2,
+                position=position_dodge(0.05)) +
+  ylim(-55, 0)
+
+print(Wp16)
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+## Random Effects
+Some potential random effects that could introduce variation in our models include the following:
+
+Run - The Trial run number. Different individuals were "run" at different times and each trial run might have experienced slightly different conditions.
+
+Tank - We had four (4) experiment tanks, each set at a specific test temperature, but tanks might vary from each other in conditions, such as temperature stability, light intensity, etc.
+
+Probe - We used twelve (12) oxygen probes, which were each calibrated to 100% oxygen saturation prior to every run. However, probes could differ in the way they measure oxygen concentration. For example, we noted that Probe 2 seemed to measure oxygen concentration lower than, and possibly more variably than, the other probes.
+
+Vr.ml - We used twelve (12) respirometers that each varied slightly in volume of water held.
+
+indiv.per.chamber - Most respiration runs contained a single individual per respiration chamber. However, some individuals (usually from the 8C Rearing Temperature) were so small that their oxygen consumption could not be detected well among the noise of the system. In these cases, we used multiple individuals from a family (i.e. 4 fish from a single family and rearing condition per chamber per run) to estimate oxygen consumption for that family/rearing condition.
+
+Family - We have 16 families for the Kuparuk River and five (5) families for the Sagavanirktok River that were each reared at three (3) temperatures (8C, 12C, and 16 C). Families were created by mixing sperm from one male with the eggs of two separate females, thereby creating individuals across families that were (1) siblings - within a family, (2) half-siblings - families that share a father but not a mother, and (3) unrealted - families that share neither a father nor a mother.
+
+Ma.g - individuals differed in size and weight
+
+sd.slope - there was variation in the slopes used to estimate mean oxygen consumption rate for each individual. 

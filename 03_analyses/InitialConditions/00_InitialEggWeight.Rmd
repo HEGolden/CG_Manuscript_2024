@@ -1,0 +1,104 @@
+---
+title: "Common Garden Initial Egg Weight"
+author: "Heidi Golden"
+date: "9/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 00 Introduction
+
+This code checks for initial differences in egg weight among populations. A subsample of each family's eggs was collected prior to fertilization and weighed in the lab at Toolik Field Station. We have wet weights for both Kuparuk and Sag/Oks populations, but lack dry weights for the Sag/Oks population.
+
+Unfertilized eggs were weighed in batches by family containing 10-36 eggs each. Each batch of eggs was weight to the nearest 0.001g and recorded in total.wet.wt column, the number of eggs per batch was counted and recorded in num.eggs column. Average weight per egg for each family was calculated by dividing total.wet.wt/num.eggs and recorded in the wet.wt.egg column.
+
+We used ANOVA to determine if initial differences in egg wet weight existed among the two populations and found no significant difference (p-value = 0.114)
+
+
+
+## 01 Load the data
+```{r EggWeightData}
+
+eggs2 <- read.csv("/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/InitialConditions/01_CommonGarden_InitialEggWeight_2017.csv")
+
+str(eggs2)
+
+```
+
+## 02 Summarize the Data
+
+```{r SummarizeData}
+# install.packages("doBy")
+library(doBy)
+
+sum.egg <- summaryBy(wet.wt.egg ~ River, data = eggs2,
+          FUN = function(x) { c(m = mean(x), sd = sd(x), n = length(x), se = sd(x)/sqrt(length(x)))})
+
+sum.egg
+
+write.csv(sum.egg, "/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/02_InitialEggWeightSummary.csv")
+```
+
+## Plots of Initial Egg Wet Weight
+
+```{r PlotInitialEggWeight}
+
+# Libraries
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+
+#  dataset
+data <- eggs2
+
+# Plot
+
+# Use this to print the plot to the Figures Folder:
+# png("/Users/hgolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/04_figures/03_InitialEggWeight.png")
+
+data %>%
+  ggplot( aes(x = location, y = wet.wt.egg, fill = location)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Initial Egg Wet Weight") +
+    xlab("Population") + ylab("Weight (g)")
+
+# Use this when printing plot to Figures Folder:
+# dev.off
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r EqualVariance-test}
+
+# Variance Test
+
+egg.ftest <- var.test(wet.wt.egg ~ location, data = eggs2)
+egg.ftest
+
+
+```
+The p-value of the F-test is 0.5275, which is greater than the level alpha = 0.05, so there is no difference between the variances of the two groups.
+
+
+```{r anova}
+
+egg.aov <-aov(wet.wt.egg ~ location, data = eggs2)
+summary(egg.aov)
+
+
+```
+
+The p-value of the anova is 0.114, which is greater than the level alpha = 0.05, so there is no difference in initial egg weight between the two populations.

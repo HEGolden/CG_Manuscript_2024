@@ -1,0 +1,353 @@
+---
+title: "iButton_CG_TankTemps"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## iButton Data
+
+We used iButton temperature loggers to monitor Common Garden tank thermal conditions throughout the experiment. The manuscript includes analysis of this temperature data and provides this code and the data files as supplementary content. 
+
+I will need to figure out how to do this in RStudio, but the template suggest that we can prepare supplimental files using the `suppldata` document-class option, which will suppress the `article history' date. This option must _not_ be used on any primary content.  
+
+I NEED TO FIGURE OUT HOW TO DO THIS!! Below, I examine the temperature data from the 00_raw_data Folder. I first use the following code to create a combined data set that includes all the Common Garden tank (8, 12, 16 degree tanks) data.
+
+
+
+```{r CG_Tank_iButtons_CreateOneFile, echo=FALSE}
+# Here, I use this following code to create a combined data set that includes all Common Garden tank (8, 12, 16 degree tanks) data.
+
+# Step 1: Load required libraries
+library(readr)
+library(dplyr)
+
+# Step 2: Set file path and pattern
+folder_path <- "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/iButtons"
+file_pattern <- "*.csv"
+
+
+# Step 3: Retrieve list of files
+file_list <- list.files(path = folder_path, pattern = file_pattern, full.names = TRUE)
+
+# Step 4: Read and combine files
+merged_data <- data.frame(
+  stringsAsFactors = FALSE,
+  Date_Time = character(),
+  Temp = numeric(),
+  reg_num = character(),
+  file_name = character()
+)
+
+for (file in file_list) {
+  # Read the CSV file, skipping the first 14 lines
+  data <- read_csv(file, skip = 14)
+  
+  # Extract the registration number from line 2
+  reg_num <- gsub("^.*: ", "", read_lines(file, n_max = 2)[2])
+  
+  # Add the registration number and file name as columns
+  data$reg_num <- reg_num
+  data$file_name <- basename(file)
+  
+  # Append the data to the merged data frame
+  merged_data <- rbind(merged_data, data)
+}
+
+
+# Step 5: Save merged data (optional)
+write_csv(merged_data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/iButton_CG_TankTemps_merged_data.csv")
+
+```
+
+I examined the file created above in Excel and removed any data for when the loggers were not measuring tank water temperature, such as when we removed the loggers to download data and between relaunching the loggers and placing them back into the tanks. These time periods were usually apparent due to large jumps in temperature reading (i.e., from water to air).
+
+I also copied the file_name column to an new column and used the Text-To-Column function, first delimited by "_", the by column width to extract the tank and aquarium information (i.e., T1A4, for example) and retained the "tank" (i.e., T1) and "aquarium" (i.e., A4) columns.
+
+I saved this new file in the 02_derived_data Folder as "iButton_CG_TankTemps_merged_checked_data.csv"
+
+This is the data used for creating summary statistics for each of the Common Garden experimental tanks.
+
+
+The following code uses merged temperature data from multiple iButton temperature logger files from the common garden experiment water tanks from the 2017 field season. Temperature data was obtained from iButton loggers deployed within each tank (T1=8C, T2=12C, and T3=16C) and within each aquarium (A1, A2, A3, and A4).
+
+Here, the data are examined, summarized, and plotted to assess thermal conditions and tank temperature variation during the experimental time frame.
+
+## Load Libraries
+```{r LoadLibraries}
+# Loads libraries and functions from the 00_scripts folder within CommonGardenManuscript project
+
+#source("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/CommonGardenManuscript/00_scripts/load_libraries.R")
+# Don;t know why this isn't working. Grrrr....
+
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+library(gdata)
+library(scales) # for setting x-axis by dates
+library(cowplot) # for plotting 2 graphs side by side
+
+# Seems to be a problem with my file path, but don't know what it is.
+# This doesn't work, either
+
+# source("00_scripts/data_summary.R")
+
+```
+
+Adding the code from data_summary.R
+
+```{r data_summary_CODE}
+# Introduction
+# This file contains some useful functions for summarizing and plotting 
+# data for the 2017 Common Garden Manuscript.
+
+
+# Data Summary:
+# The following function creates summary statistics that can be used in 
+# tables and plots.  The summary statistic functions can be changed to within 
+# this code to whatever summary statistics are desired for the analysis 
+# (i.e., median instead of mean, etc.)
+
+# This data_summary function produces mean, min, max, n, variance, and standard error
+# for a data column grouped by different variable names. 
+
+# Example:
+# daily.sum <- data_summary(Data, varname="temp_C", 
+#                          groupnames=c("tank_aq", "Date"))
+
+# The function requires the R package 'dplyr'
+# Install dplyr in needed using...
+#install.packages("dplyr")
+
+# This script loads the library for you.
+
+library(dplyr)
+
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      minimum = min(x[[col]], na.rm=TRUE),
+      maximum = max(x[[col]], na.rm=TRUE),
+      n = length(x[[col]]),
+      v = var(x[[col]], na.rm = TRUE),
+      se = sd(x[[col]])/sqrt(length(x[[col]])), na.rm=TRUE)
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+```
+
+
+## Load the Data
+Below I load the merged "cleaned" data file for further clean-up.
+```{r DataCleanUp}
+
+# PROBLEM: The file is not accepting the working directory within this R Project. HOW DO I FIX THIS??
+# Totally defeats the 'reproducible data' ideal.
+
+# Final check of data uses this Excel code, where columnD = "tank" and columnC = temp_C: =IF(AND(D5="T1",OR(C5>9,C5<5.5)),"check",IF(AND(D5="T2",OR(C5>13,C5<9.5)),"check",IF(AND(D5="T3",OR(C5>17,C5<14.5)),"check", "")))
+# If temperature data mimicked measured air temperature values, these data were removed.
+
+
+# Load data
+Data <- as.data.frame(read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/iButton_CG_TankTemps_merged_clean_data.csv"))
+str(Data)
+
+```
+
+
+```{r ChangeDataStructure}
+# uses lubridate package
+
+Data$Date.Time <- mdy_hm(Data$Date.Time,tz=Sys.timezone())
+Data$Date <- date(Data$Date.Time)
+Data$year <- as.factor(year(ymd(Data$Date)))
+Data$Month <- month(ymd(Data$Date))
+# New facet label names for Month variable
+Data$Month <- factor(Data$Month, levels = c("5", "6", "7", "8", "9", "10"), 
+                  labels = c("May", "June", "July", "August", "September", "October"))
+Data$tank <- as.factor(Data$tank)
+Data$aquarium <- as.factor(Data$aquarium)
+Data$tank_aq <- as.factor(paste(Data$tank, Data$aquarium, sep = "_"))
+
+str(Data)
+```
+
+## Create Daily Statistics
+The Raw Data needs to be filtered to remove incidences where the logger might not be reading water temperature, such as when a logger becomes dry due to poor placement in the stream, removal from the stream (deployment/retrieval), or drought.
+
+I first calculate the summary statistic, below, join the summary stats to the original data frame, then filter the data by daily variance using a variance threshold.
+
+
+The function data_summary() is saved in an R script within the 03_scripts folder. The function calculates means, min, max, n, variance, and standard error for the temperature data, which can be grouped by different variables within the data frame.
+
+The following code accesses the function from it's saved location within this R project so it can be called repeatedly as needed.
+
+The data_summary() function is located within the 03_scripts folder and was called above with the libraries.
+
+Summarize the Data by 'tank_aq' and 'Date':
+```{r SummarizeDataBytank}
+
+daily.sum <- data_summary(Data, varname="temp_C", 
+                    groupnames=c("tank_aq", "Date"))
+
+write.csv(daily.sum, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/iButton_CG_TankTemps_DailyStats.csv")
+```
+
+## Combine Temperature Data with tank Information
+This section combines the derived temperature and tank info data set with summary statistics for each tank using the right_join function from the dplyr package. This is done in order to plot individual tank observations as point data and daily means as line data in the same plot.
+
+```{r MergeDailyStatsWithData}
+
+new.data1 <- Data %>% right_join(daily.sum, by=c("tank_aq", "Date"))
+str(new.data1)
+# Looks like some of this data was from other years. Here I remove all years exept for 2017
+cg.data <- subset(new.data1, year == "2017")
+#str(cg.data)
+
+# Reorder the dataframe by year, tank, and date/time:
+cg.data <- cg.data[order(cg.data$year, cg.data$tank_aq, cg.data$Date.Time), ]
+
+
+# Rename some of the columns (uses gdata package):
+cg.data <- rename.vars(cg.data, from = "temp_C.y", to = "daily.mean.temp")
+cg.data <- rename.vars(cg.data, from = "temp_C.x", to = "temp_C")
+cg.data <- rename.vars(cg.data, from = "minimum", to = "daily.min")
+cg.data <- rename.vars(cg.data, from = "maximum", to = "daily.max")
+cg.data <- rename.vars(cg.data, from = "n", to = "daily.n")
+cg.data <- rename.vars(cg.data, from = "v", to = "daily.var")
+cg.data <- rename.vars(cg.data, from = "se", to = "daily.se")
+
+# Creates a new column in the data frame for water or air temperature based on daily variance > 25 (water <=25, air > 25).
+cg.data$water.air.temp <- as.factor(ifelse(cg.data$daily.var > 25, "air", "water"))
+       
+
+str(cg.data)
+```
+
+
+```{r LoadTankHandReadings}
+tank_reads <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/CG_AbioticConditions/TankAquarium_TemperatureReadings.csv")
+head(tank_reads)
+```
+
+
+```{r SummarizeTankHandReadings}
+
+tank_reads.sum <- data_summary(tank_reads, varname="Aquarium.Temp.C", 
+                    groupnames=c("tank_aq", "Date"))
+
+tank_reads.sum <- tank_reads.sum[ c("Date", "tank_aq", "Aquarium.Temp.C")]
+tank_reads.sum <- tank_reads.sum[-1, ] # only if 1st row in dataframe is blank
+
+# Adjust column structure
+tank_reads.sum$Date <- mdy(tank_reads.sum$Date,tz=Sys.timezone())
+tank_reads.sum$tank_aq <- as.factor(tank_reads.sum$tank_aq)
+
+str(tank_reads.sum)
+#####################################################################
+
+# Perform right join
+cg_data <- merge(cg.data, tank_reads.sum, by = c("tank_aq", "Date"), all.x = TRUE)
+
+#str(cg_data)
+
+# save derived data to folder:
+write.csv(cg_data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/iButton_CG_TankTempsHandReads_merged_checked_data.csv")
+```
+
+# Plotting the Experiment Temperature Conditions
+Below, I create boxplots by month and line-point plots over time for each of the experiment treatment tanks, including each of the four aquariums within each temperature treatment tank.
+
+I decided against plotting the daily hand-held thermometer readings on these graphs because it looks confusingly busy and because the iButton data is more accurate than readings from the hand-held thermometer.
+
+Selecting temperature readings with daily variance > 25 provides extra insurance that I did not miss removing any readings for when loggers were out of the water (i.e., when downloading data from and resetting the loggers).
+
+```{r NewDataFrame-WaterTempStandardTimeFrame}
+
+# Remove suspected "air" temperature data:
+water <- subset(cg.data, water.air.temp == "water")
+
+```               
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%   Temperature Plots Start Here    %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+```{r PlotAllTempByYearLocDate}
+# uses ggplot2, scales, and cowplot packages
+
+
+# grouped boxplot
+bp <- ggplot(data=water, aes(x=tank_aq, y=daily.mean.temp, fill=tank)) +
+  geom_boxplot(outlier.size=.15, outlier.alpha=0.05)+
+  labs(title="Mean Water Temperature", x="", y="Temperature (C)")+
+  theme(axis.text.x=element_text(angle=-90, vjust=0.4,hjust=1)) + 
+  theme(axis.text.x = element_text(size = 5))+
+  theme(legend.position="none")+
+  facet_grid(year ~ as.factor(Month), scale="fixed")
+
+bp
+
+ggsave("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/04_figures/CG_Tank_DailyMeanWaterTemp_ByMonth_Boxplot.png")
+
+
+```
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%% tank by tank Temperature Graphs %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+## Data by Tank
+
+
+
+```{r PlotTankTemps}
+#Create data subset:
+library(dplyr)
+
+
+# plot0 provides the base graph for all tributary temperature graphs
+plot0 <- ggplot(data = water, aes(x = Date, y = temp_C)) + ylim(0, 20)
+
+
+plot0 +
+  geom_vline(data = water %>% filter(daily.var > 25), aes(xintercept = Date, group=tank_aq, color=tank_aq, alpha=0.01), lwd=1.5)+
+  geom_point(aes(alpha=0.02, group=tank_aq, color=tank_aq), size=0.5)+
+  geom_line(aes(y=daily.mean.temp, alpha=1, group=tank_aq, color=tank_aq)) +
+  ggtitle("Common Garden Tank Temperature 2017") +
+  labs(x = "Date", y = "Temperature (C)", color="Tank-Aquarium") +
+  guides(alpha="none")
+
+ggsave("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/04_figures/CG_Tank_iButtonTemperatureGraph_2017.png")
+```
+
+
+Summarize the Data by 'tank_aq' and 'Month':
+```{r SummarizeMonthAndOverall_Tables}
+#str(Data)
+
+exp_table <- data_summary(Data, varname="temp_C", 
+                    groupnames=c("tank"))
+
+
+monthly_table <- data_summary(Data, varname="temp_C", 
+                    groupnames=c("tank", "Month"))
+
+write.csv(exp_table, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/05_tables/iButton_CG_TankTempsTable_ExperimentStats.csv")
+
+write.csv(monthly_table, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/05_tables/iButton_CG_TankTempsTable_MonthlyStats.csv")
+
+```

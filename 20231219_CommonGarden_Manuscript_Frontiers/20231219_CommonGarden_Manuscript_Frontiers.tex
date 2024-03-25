@@ -1,0 +1,652 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This is just an example/guide for you to refer to when submitting manuscripts to Frontiers, it is not mandatory to use Frontiers .cls files nor frontiers.tex  %
+% This will only generate the Manuscript, the final article will be typeset by Frontiers after acceptance.
+%                                              %
+%                                                                                                                                                         %
+% When submitting your files, remember to upload this *tex file, the pdf generated with it, the *bib file (if bibliography is not within the *tex) and all the figures.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Version 3.4 Generated 2018/06/15 %%%
+%%% You will need to have the following packages installed: datetime, fmtcount, etoolbox, fcprefix, which are normally inlcuded in WinEdt. %%%
+%%% In http://www.ctan.org/ you can find the packages and how to install them, if necessary. %%%
+
+\documentclass[utf8]{frontiersSCNS}
+
+%\setcitestyle{square} % for Physics and Applied Mathematics and Statistics articles
+\usepackage{url,hyperref,lineno,microtype,subcaption}
+\usepackage[onehalfspacing]{setspace}
+
+\linenumbers
+
+
+% BELOW TAKEN FROM rticles plos template
+%
+% amsmath package, useful for mathematical formulas
+\usepackage{amsmath}
+% amssymb package, useful for mathematical symbols
+\usepackage{amssymb}
+
+% hyperref package, useful for hyperlinks
+\usepackage{hyperref}
+
+% graphicx package, useful for including eps and pdf graphics
+% include graphics with the command \includegraphics
+\usepackage{graphicx}
+
+% Sweave(-like)
+\usepackage{fancyvrb}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{fontshape=sl}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{}
+\DefineVerbatimEnvironment{Scode}{Verbatim}{fontshape=sl}
+\newenvironment{Schunk}{}{}
+\DefineVerbatimEnvironment{Code}{Verbatim}{}
+\DefineVerbatimEnvironment{CodeInput}{Verbatim}{fontshape=sl}
+\DefineVerbatimEnvironment{CodeOutput}{Verbatim}{}
+\newenvironment{CodeChunk}{}{}
+
+% cite package, to clean up citations in the main text. Do not remove.
+\usepackage{cite}
+
+\usepackage{color}
+
+% Below is from frontiers
+%
+\bibliographystyle{frontiersinSCNS}
+% Use doublespacing - comment out for single spacing
+%\usepackage{setspace}
+%\doublespacing
+
+
+% Leave a blank line between paragraphs instead of using \\
+
+
+\def\keyFont{\fontsize{8}{11}\helveticabold }
+
+
+%% ** EDIT HERE **
+%% PLEASE INCLUDE ALL MACROS BELOW
+
+%% END MACROS SECTION
+
+% Pandoc syntax highlighting
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+
+% tightlist command for lists without linebreak
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+% Pandoc citation processing
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslentryspacingunit} % times entry-spacing
+\setlength{\cslentryspacingunit}{\parskip}
+% for Pandoc 2.8 to 2.10.1
+\newenvironment{cslreferences}%
+  {}%
+  {\par}
+% For Pandoc 2.11+
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+  \let\oldpar\par
+  \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\cslentryspacingunit}
+ }%
+ {}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+
+\def\Authors{
+  Heidi E Golden\,\textsuperscript{1*},
+  Linda A Deegan\,\textsuperscript{2},
+  Mark C Urban\,\textsuperscript{3}}
+
+\def\Address{
+
+  \textsuperscript{1} Golden Ecology LLC,  Simsbury,  CT,  USA
+  
+  \textsuperscript{2} Woodwell Climate Research
+Center,  Falmouth,  MA,  USA
+  
+  \textsuperscript{3} Ecology and Evolutionary Biology Dept., University
+of Connecticut,  Storrs,  CT,  USA
+  }
+
+  \def\corrAuthor{Heidi E Golden}\def\corrAddress{Golden Ecology LLC\\57
+E Weatogue
+St\\Simsbury, CT, 6070 USA}\def\corrEmail{\href{mailto:hgolden@goldenecology.com}{\nolinkurl{hgolden@goldenecology.com}}}
+  \def\firstAuthorLast{Golden {et~al.}}
+  
+  
+  
+  
+
+
+\begin{document}
+
+\onecolumn
+\firstpage{1}
+
+
+\title[Grayling local adaptation]{Local adaptation portends climate
+change winners and losers - DRAFT}
+\author[\firstAuthorLast]{\Authors}
+\address{} %This field will be automatically populated
+\correspondance{} %This field will be automatically populated
+
+\extraAuth{}% If there are more than 1 corresponding author, comment this line and uncomment the next one.
+%\extraAuth{corresponding Author2 \\ Laboratory X2, Institute X2, Department X2, Organization X2, Street X2, City X2 , State XX2 (only USA, Canada and Australia), Zip Code2, X2 Country X2, email2@uni2.edu}
+
+
+\maketitle
+
+\begin{abstract}
+  Arctic freshwater species are highly susceptible to extinction due to rapid polar amplification of climate change and dispersal limitation from polar and dendritic habitat constraints. Plasticity and/or local adaptation (evolution) of traits might help mitigate impacts of climate mediated environmental stress, such as increased water temperature. Arctic grayling (\textit{Thymallus arcticus}) provide a model Arctic freshwater species for investigating trait variation among populations that might mitigate impacts from rapid climate change. We used common garden experiments to compare reaction norms for early life-history traits in response to temperature differences among two Arctic grayling populations that experience different local temperature regimes (cold and warm). We reared Arctic grayling using a sib-ship mating design under three different temperatures (8°C, 12°C, and 16°C). We found evidence for local trait adaptation to temperature suggesting excelerated growth and metabolic rates for the cold-adapted population compared to the warm-adapted populations. However, the cold-adapted population showed reduced survivorship compared to the warm-adapted population under warm, projected climate change, conditions. Our finding suggest that trait evolution by local populations might help mitigate species extinctions due to rapid climate change, but population persistence likely depends on trade-offs between growth and survivorship.
+
+%All article types: you may provide up to 8 keywords; at least 5 are mandatory.
+\tiny
+ \keyFont{ \section{Keywords:} Climate Arctic Traits Extinction Freshwater Polar Dispersal Grayling } 
+
+\end{abstract}
+
+\hypertarget{introduction}{%
+\section*{Introduction}\label{introduction}}
+\addcontentsline{toc}{section}{Introduction}
+
+Arctic freshwater species are highly susceptible to extinction from
+rapid climate change because they are dispersal-limited by polar range
+and dendritic habitat constraints (Rantanen et al., 2022; Reist et al.,
+2006; Song et al., 2021). However, these dispersal-limited populations
+might moderate extinction probability if their phenotypic variation
+and/or genetic adaptive capacity for traits promote survival under new
+climate change conditions (Román-Palacios and Wiens, 2020). Phenotypic
+trait plasticity (flexibility in trait expression) and local trait
+adaptation (genotypic evolution) to warmer water temperature might help
+mitigate the impacts of freshwater species loss due to rapid climate
+change (Gunderson and Stillman, 2015; Román-Palacios and Wiens, 2020).
+Understanding the limitations and underlying mechanisms of species
+phenotypic responses to environmental change will enable better
+estimation and prediction of the magnitude of climate change extinction
+risk for Arctic freshwater species.
+
+Common garden experiments provide means to assess population-level
+plasticity and evolutionary capacity by testing for trait differences
+(reaction norms) among populations reared under the same set of
+environmental conditions. Evidence from common garden experiments
+suggests that early life history traits in salmonid fishes, including
+yolk assimilation and size at hatching, could be under strong selection
+and appear to be positively correlated with survival (Miller et al.,
+1988; Perez and Munch, 2010). For example, populations of sockeye salmon
+(\textit{Oncorhnchus nerka}) showed variation in thermal tolerance
+limits and embryo survival when reared in a common garden setting
+(Whitney et al., 2013). Populations of brown trout
+(\textit{Salmo trutta}) reared in a common garden environment showed
+evidence of locally adapted early life history traits with implications
+for climate change adaptability (Jensen et al., 2008). European grayling
+(Thymallus thymallus) populations from common garden experiments showed
+evidence for local adaptation among populations for larval growth, yolk
+conversion efficiency, and survival (Haugen and Vollestad, 2000;
+Kavanagh KD, 2010; Thomassen et al., 2011), but growth-rate and
+developmental trade-offs in cold-adapted populations reared at higher
+temperatures suggested limits to adaptive capacity (Kavanagh KD, 2010).
+Thus,the response of Arctic freshwater fish, that are limited in
+dispersal ability by polar and dendritic habitats, to rapid climate
+change might hinge on degree of phenotypic plasticity, adaptive
+potential, and trade-offs among early life history traits.
+
+Arctic grayling (\textit{Thymallus arcticus}), a cold-adapted freshwater
+salmonid species, on Alaska's North Slope shows inter-population neutral
+genetic variation due to population isolation (distance and environment)
+and downstream-biased dispersal from the headwaters toward the Arctic
+Ocean (Golden et al., 2021). North Slope Arctic grayling populations
+show variation in growth of age-0 fish among streams, which was shown to
+be related to stream temperature and the presences of multiple lakes
+within the watershed (Lueke and MacKinnon, 2008). However, trait
+variation either by phenotypic plasticity or natural selection within
+these semi-isolated populations has not been assessed and might be
+important for species persistence during rapid climate change. Few
+common garden experiments have been conducted with Arctic grayling and
+none have been conducted in the Arctic to test for local trait
+adaptation. In this study, we investigated the ability of Arctic
+grayling to respond to future climate change conditions by examining
+underlying mechanisms for early life history phenotypic trait variation
+in the Alaskan Arctic, an area undergoing the most rapid rate of climate
+change on earth.
+
+We investigated two North Slope headwater populations of Arctic grayling
+that experience different thermal regimes and ask (1) are there
+differences in early life-history traits (means and reaction norms)
+among populations and, if so, (2) are differences due to trait
+plasticity (environment) or local adaptation (genetics), and (3) are
+trait differences associated with trade-offs with survival?
+
+\hypertarget{materials-and-methods}{%
+\section*{Materials and Methods}\label{materials-and-methods}}
+\addcontentsline{toc}{section}{Materials and Methods}
+
+\hypertarget{study-species-and-area}{%
+\subsection*{Study species and area}\label{study-species-and-area}}
+\addcontentsline{toc}{subsection}{Study species and area}
+
+Arctic grayling is a freshwater salmonid species with a Holarctic
+distribution, including northern regions of Europe, North America, and
+parts of Asia, and with small remnant populations in Montana, USA. The
+species is threatened by increasing water temperature due to climate
+change and by other anthropogenic factors, including habitat degradation
+and fragmentation (AEP/ACA, 2015; Tingley et al., 2022). In the Alaskan
+Arctic, reduced aquatic connectivity due to climate change and the
+shifting balance between precipitation and evapotranspiration further
+influences dispersal capability for Arctic grayling (Betts and Kane,
+2015; Golden et al., 2021). These combined challenges will likely
+increase extinction probability unless the species is able to adjust to
+warmer climate change conditions through phenotypic plasticity or
+adaptive evolution.
+
+\begin{figure}
+
+{\centering \includegraphics[width=85mm,height=85mm]{20231219_CommonGarden_Manuscript_Frontiers_files/figure-latex/Figure1_SiteMap, cgSites-1} 
+
+}
+
+\caption{The Kupark River and Sagavanirktok River Arctic grayling populaiton collection locations.}\label{fig:Figure1_SiteMap, cgSites}
+\end{figure}
+
+Arctic grayling populations used in this research were previously
+determined to be neutrally genetically differentiated and to exhibit
+phenotypic differences among populations regarding seasonal movement
+patterns (Golden, 2016; Golden et al., 2021). Individuals from the
+Kuparuk River (Kup) population were collected from the Kuparuk River
+headwaters, where individuals overwinter in the headwater lake (Green
+Cabin Lake) and migrate downstream in springtime into the Kuparuk River
+to spawn (Figure 1). Individuals from the Sagavanirktok River (Sag)
+population were collected from the lower reaches of Oksrukuyik Creek,
+where individuals overwinter in the Sagavanirktok River and migrate
+upstream in springtime into Oksrukuyik Creek to spawn (Figure 1). Both
+populations exhibit moderate to high effective population size (Ne),
+inbreeding coefficients close to zero (+/- 0.04) and low gene flow among
+populations (Golden et al.~2021). Additionally, spawning and rearing
+locations within these two watersheds experience different thermal
+conditions during the open-water time period from late-May to
+mid-September (Figure 2). Average temperature during the open-water
+period (late-May to Mid-September) for the Sag populations was
+X-Xdegrees C and for the Kuparuk River population was X-Xdegrees C for
+YYYY to YYYY.
+
+Adult Arctic grayling from these two populations were captured in late
+May using fyke nets and by angling and held temporarily (XX Days) on
+site in holding pens until spawning capable. All Arctic grayling
+captured were assumed to be randomly sampled from the population. Adult
+grayling were determined to be spawning capable when gentle pressure on
+the abdomen toward the vent readily expelled gametes. When spawning
+ready, gametes of males and females were stripped and families were
+created for each population by crossing each sire captured with two
+unique dams, yielding 16 families for the Kuparuk River population and 5
+families for the Sagavanirktok population. No initial differences in egg
+size based on yolk volume estimates existed among the populations (yolk
+volume means +/- SE: Kup = XX +/- XXmm\^{}3; Sag = XX +/- XXmm\^{}3).
+Our mating design produced F1 individuals of full-siblings,
+half-siblings, and unrelated individuals for each population, allowing
+estimation of early life history trait heritability. Eggs from each
+population and each family were separated into three treatment groups,
+cool (8°C), warm (12°C), and hot (16°C), incubated to hatching and
+reared to fry.
+
+\hypertarget{study-design}{%
+\subsection*{Study design}\label{study-design}}
+\addcontentsline{toc}{subsection}{Study design}
+
+Three experimental tanks (1 x 3 m) were located at Toolik Field Station
+(Figure 1). The water for the experiment was sourced from filtered
+Toolik Lake water, which was similar in chemical composition to that of
+the populations used in the environment (SUPPLEMENTAL ??). Three
+temperature regimes were established for the tanks corresponding to mean
+July and August water temperatures experienced by the Sagavanirktok
+(low), Kuparuk (warm) and Predicted Climate Change (hot) conditions,
+respectively. In the laboratory, the eggs from each full-sib family were
+divided into three lots of \#\#\# eggs. Each lot was put into individual
+chamber within each tanks (Figure 3). All families were represented at
+all three temperatures, such that all three populations were equally
+represented in all tanks. Environmental conditions were carefully
+controlled in all tanks (Supplemental Temperature data). We performed a
+test for the presence of tank (Aquarium??) effects for growth rate or
+survival probability (arcsine square-root transformed) during the period
+of external feeding. Tanks were nested within populations and analysed
+for each temperature separately. We found no tank effect (all P
+\textgreater{} 0.2). However, the use of four tanks for each temperature
+may introduce some extra, unexplained variance into the model. This
+variance is probably absorbed into the sire and dam effects. Dead
+individuals (eggs and fry) were registered and removed daily. At
+hatching, up to 15 yolk-sac fry were sampled from each family and
+conserved in 70\% ethanol for later measurements. All ®sh were conserved
+for more than 4 weeks before measuring. Families experiencing high
+mortality were not sampled to ensure a suf®cient number of individuals
+for the later parts of the experiment. The same number of fry was
+sampled at swim-up (a distinct time period when the fry leave the bottom
+of the boxes and shoal in a mid-water position), leaving a variable
+number of ®ngerlings in each box (Aursjùen: 5± 86, HaÊrrtjùnn: 13±88,
+Lesjaskogsvatn: 5±86). In order to reduce possible density effects
+during the period of exogenous growth, the number of individuals in each
+box was reduced to less than 50 individuals by randomly removing excess
+individuals. We tested for possible density effects on growth and
+survival, but no effect was found (regression analysis: density
+vs.~survival: r  0.042, N  143, P  0.615; density vs.~growth rate: r 
+±0.005, N  143, P  0.952). Carlstein (1995), working at somewhat higher
+densities, also did not ®nd any density effect on grayling growth or
+survival. Density is, therefore, not used as a variable in the
+statistical analyses. After swim-up, the fry were fed commercial ®sh
+pellets (EWOS EST 90, 0-granulate) in excess once a day for a period
+corresponding to about 180 degree-days, which corresponded to 16, 20 and
+23 days for the warm, medium and cold regimes, respectively. Fungal
+infections (Saprolegnia sp.) constituted a problem during the
+experiment, which increased after the onset of external feeding. As a
+result of this, the warm regime experiment with the HaÊrrtjùnn grayling
+(all families in the four warm treatment tanks) had to be terminated
+after 13 days of external feeding. \#\# Cumulative hatching \{-\}
+
+\hypertarget{survival}{%
+\subsection*{Survival}\label{survival}}
+\addcontentsline{toc}{subsection}{Survival}
+
+\hypertarget{fish-length-and-yolk-volume}{%
+\subsection*{Fish length and yolk
+volume}\label{fish-length-and-yolk-volume}}
+\addcontentsline{toc}{subsection}{Fish length and yolk volume}
+
+\hypertarget{respiration}{%
+\subsection*{Respiration}\label{respiration}}
+\addcontentsline{toc}{subsection}{Respiration}
+
+\hypertarget{heritability}{%
+\subsection*{Heritability}\label{heritability}}
+\addcontentsline{toc}{subsection}{Heritability}
+
+\hypertarget{results}{%
+\section*{Results}\label{results}}
+\addcontentsline{toc}{section}{Results}
+
+\hypertarget{cumulative-hatching}{%
+\subsection*{Cumulative hatching}\label{cumulative-hatching}}
+\addcontentsline{toc}{subsection}{Cumulative hatching}
+
+\hypertarget{survival-1}{%
+\subsection*{Survival}\label{survival-1}}
+\addcontentsline{toc}{subsection}{Survival}
+
+\hypertarget{fish-length-and-yolk-volume-1}{%
+\subsection*{Fish length and yolk
+volume}\label{fish-length-and-yolk-volume-1}}
+\addcontentsline{toc}{subsection}{Fish length and yolk volume}
+
+\hypertarget{respiration-1}{%
+\subsection*{Respiration}\label{respiration-1}}
+\addcontentsline{toc}{subsection}{Respiration}
+
+\hypertarget{heritability-1}{%
+\subsection*{Heritability}\label{heritability-1}}
+\addcontentsline{toc}{subsection}{Heritability}
+
+\hypertarget{subsection-1}{%
+\subsection*{Subsection 1}\label{subsection-1}}
+\addcontentsline{toc}{subsection}{Subsection 1}
+
+You can use \texttt{R} chunks directly to plot graphs.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{x }\OtherTok{\textless{}{-}} \DecValTok{0}\SpecialCharTok{:}\DecValTok{100}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{999}\NormalTok{)}
+\NormalTok{y }\OtherTok{\textless{}{-}} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ (x }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(}\FunctionTok{length}\NormalTok{(x), }\AttributeTok{sd =} \DecValTok{3}\NormalTok{) }\SpecialCharTok{+} \DecValTok{3}\NormalTok{)}
+\FunctionTok{plot}\NormalTok{(x, y)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{subsection-2}{%
+\subsection*{Subsection 2}\label{subsection-2}}
+\addcontentsline{toc}{subsection}{Subsection 2}
+
+Frontiers requires figures to be submitted individually, in the same
+order as they are referred to in the manuscript. Figures will then be
+automatically embedded at the bottom of the submitted manuscript. Kindly
+ensure that each table and figure is mentioned in the text and in
+numerical order. Permission must be obtained for use of copyrighted
+material from other sources (including the web). Please note that it is
+compulsory to follow figure instructions. Figures which are not
+according to the guidelines will cause substantial delay during the
+production process.
+
+\hypertarget{discussion}{%
+\section{Discussion}\label{discussion}}
+
+\begin{enumerate}
+\def\labelenumi{(\arabic{enumi})}
+\tightlist
+\item
+  are there differences in early life-history traits (means and reaction
+  norms) among populations and, if so, (2) are differences due to trait
+  plasticity (environment) or local adaptation (genetics), and (3) are
+  trait differences associated with trade-offs with survival?
+\end{enumerate}
+
+\hypertarget{disclosureconflict-of-interest-statement}{%
+\section*{Disclosure/Conflict-of-Interest
+Statement}\label{disclosureconflict-of-interest-statement}}
+\addcontentsline{toc}{section}{Disclosure/Conflict-of-Interest
+Statement}
+
+The authors declare that the research was conducted in the absence of
+any commercial or financial relationships that could be construed as a
+potential conflict of interest.
+
+\hypertarget{author-contributions}{%
+\section*{Author Contributions}\label{author-contributions}}
+\addcontentsline{toc}{section}{Author Contributions}
+
+The statement about the authors and contributors can be up to several
+sentences long, describing the tasks of individual authors referred to
+by their initials and should be included at the end of the manuscript
+before the References section.
+
+\hypertarget{acknowledgments}{%
+\section*{Acknowledgments}\label{acknowledgments}}
+\addcontentsline{toc}{section}{Acknowledgments}
+
+Funding:
+
+\hypertarget{supplemental-data}{%
+\section{Supplemental Data}\label{supplemental-data}}
+
+Supplementary Material should be uploaded separately on submission, if
+there are Supplementary Figures, please include the caption in the same
+file as the figure. LaTeX Supplementary Material templates can be found
+in the Frontiers LaTeX folder
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+A Frontier article expect the reference list to be included in this
+section. To make that happens, the below syntax can be used. This
+\href{https://pandoc.org/MANUAL.html\#placement-of-the-bibliography}{feature
+is from Pandoc citeproc} which is used with \texttt{frontier\_article()}
+to handle the bibliography
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-AEP2015}{}}%
+AEP/ACA (2015). Status of the arctic grayling (thymallus arcticus) in
+alberta: Update 2015. Alberta wildlife status report no. 57.
+\emph{Alberta Environment and Parks}, 96 pp. Available at:
+\url{https://open.alberta.ca/dataset/a4463230-1cc2-4b2e-b465-2689b18f586e/resource/35cbc02a-4e50-479f-86fc-57846d47a50c/download/sar-statusarcticgraylingalberta-dec2015.pdf}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Betts2015}{}}%
+Betts, E., and Kane, D. (2015). Linking north slope of alaska climate,
+hydrology, and fish migration. \emph{Hydrology Research} 46, 578--590.
+doi:\href{https://doi.org/10.2166/nh.2014.031}{10.2166/nh.2014.031}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Golden2016}{}}%
+Golden, H. (2016). Climate-induced habitat fragmentation affects
+metapopulation structure of arctic grayling in tundra streams.
+\emph{Doctoral Dissertations} 1259. Available at:
+\url{https://digitalcommons.lib.uconn.edu/dissertations/1259}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Golden2021}{}}%
+Golden, H., Holsinger, K., Deegan, L., MacKenzie, C., and Urban, M.
+(2021). River drying influences genetic variation and population
+structure in an arctic freshwater fish. \emph{Conservation Genetics} 22,
+369--382.
+doi:\href{https://doi.org/10.1007/s10592-021-01339-0}{10.1007/s10592-021-01339-0}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gunderson2015}{}}%
+Gunderson, A., and Stillman, J. (2015). Plasticity in thermal tolerance
+has limited potential to buffer ectotherms from global warming.
+\emph{Proceedings of the Royal Society B} 282.
+doi:\href{https://doi.org/10.1098/rspb.2015.0401}{10.1098/rspb.2015.0401}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Haugen2000}{}}%
+Haugen, T., and Vollestad, L. (2000). Population differences in early
+life-history traits in grayling. \emph{Journal of Evolutionary Biology}
+13, 897--905.
+doi:\href{https://doi.org/10.1046/j.1420-9101.2000.00242.x}{10.1046/j.1420-9101.2000.00242.x}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Jensen2008}{}}%
+Jensen, L., Hansen, M., Pertoldi, C., Holdensgaard, G., Mensberg, K.,
+and Loeschcke, V. (2008). Local adaptation in brown trout early
+life-history traits: Implications for climate change adaptability.
+\emph{Proceedings of the Royal Society B} 275, 2859--2868.
+doi:\href{https://doi.org/10.1098/rspb.2008.0870}{10.1098/rspb.2008.0870}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Kavanagh2010}{}}%
+Kavanagh KD, G. F., Haugen TO (2010). Contemporary temperature-driven
+divergence in a nordic freshwater fish under conditions commonly thought
+to hinder adaptation. \emph{BMC Evolutionary Biology} 10.
+doi:\href{https://doi.org/10.1186/1471-2148-11-360}{10.1186/1471-2148-11-360}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Lueke2008}{}}%
+Lueke, C., and MacKinnon, P. (2008). Landscape effects on growth of
+age-0 arctic grayling in tundra streams. \emph{Transactions of the
+American Fisheries Society} 137, 236--243.
+doi:\href{https://doi.org/10.1577/T05-039.1}{10.1577/T05-039.1}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Miller1988}{}}%
+Miller, T., Crowder, L., Rice, J., and Marschall, E. (1988). Larval size
+and recruitment mechanisms in fishes: Toward a conceptual framework.
+\emph{Canadian Journal of Fisheries and Aquatic Sciences} 45,
+1657--1670. doi:\href{https://doi.org/10.1139/f88-197}{10.1139/f88-197}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Perez2010}{}}%
+Perez, K., and Munch, S. (2010). Extreme selection on size in the early
+lives of fish. \emph{Evolution} 64, 2450--2457.
+doi:\href{https://doi.org/10.1111/j.1558-5646.2010.00994.x}{10.1111/j.1558-5646.2010.00994.x}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Rantanen2022}{}}%
+Rantanen, M., Karpechko, A., Lipponen, A., K, K. N., Hyvarinen, O., K,
+K. R., Vihma, T., and Laaksonen, A. (2022). The arctic has warmed nearly
+four times faster than the globe since 1979. \emph{Communications Earth
+\& Environment} 3.
+doi:\href{https://doi.org/10.1038/s43247-022-00498-3}{10.1038/s43247-022-00498-3}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Reist2006}{}}%
+Reist, J., Wrona, F., Prowse, T., Power, M., Dempson, J., King, J., and
+Beamish, R. (2006). An overview of effects of climate change on selected
+arctic freshwater and anadromous fishes. \emph{Ambio} 35. Available at:
+\url{http://www.jstor.org/stable/4315757}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Roman-Palacios2020}{}}%
+Román-Palacios, C., and Wiens, J. (2020). Recent responses to climate
+change reveal the drivers of species extinction and survival.
+\emph{PNAS} 117, 4211--4217.
+doi:\href{https://doi.org/10.1073/pnas.1913007117}{10.1073/pnas.1913007117}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Song2021}{}}%
+Song, H., Kemp, D., Tian, L., Chu, D., Song, H., and Dai, X. (2021).
+Thresholds of temperature change for mass extinctions. \emph{Nature
+Communications}.
+doi:\href{https://doi.org/10.1038/s41467-021-25019-2}{10.1038/s41467-021-25019-2}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Thomassen2011}{}}%
+Thomassen, G., Barson, N., Haugen, T., and Vollstad, L. (2011).
+Contemporary divergence in early life history in grayling
+(\emph{thymallus thymallus}). \emph{BMC Evolutionary Biology} 11.
+doi:\href{https://doi.org/10.1186/1471-2148-11-360}{10.1186/1471-2148-11-360}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Tingley2022}{}}%
+Tingley, R. I., Infante, D., Dean, E., Schemske, D., Cooper, A., Ross,
+J., and Daniel, W. (2022). A landscape approach for identifying
+potential reestablishment sites for extirpated stream fishes: An example
+with arctic grayling (\emph{thymallus thymallus}) in michigan.
+\emph{Hydrobiologia} 849, 1397--1415.
+doi:\href{https://doi.org/10.1007/s10750-021-04791-8}{10.1007/s10750-021-04791-8}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Whitney2013}{}}%
+Whitney, C., Hinch, S., and Patterson, D. (2013). Provenance matters:
+Thermal reaction norms for embryo survival among sockeye salmon
+oncorhynchus nerka populations. \emph{Journal of Fish Biology} 82,
+1159--1176.
+doi:\href{https://doi.org/10.1111/jfb.12055}{10.1111/jfb.12055}.
+
+\end{CSLReferences}
+
+\hypertarget{figures}{%
+\section*{Figures}\label{figures}}
+\addcontentsline{toc}{section}{Figures}
+
+\begin{figure}
+
+{\centering \includegraphics[width=85mm,height=85mm]{20231219_CommonGarden_Manuscript_Frontiers_files/figure-latex/Figure-1-1} 
+
+}
+
+\caption{Figure caption}\label{fig:Figure-1}
+\end{figure}
+
+
+\end{document}

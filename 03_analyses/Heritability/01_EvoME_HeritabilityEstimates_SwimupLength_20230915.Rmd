@@ -1,0 +1,342 @@
+---
+title: "Heritability -  Swim-up Length"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+Here I use the R package MCMCglmm to fit generalized linear mixed models to our 2017 common garden fish length at swim-up response variable. I chose this modeling approach to provide estimates of heritability for fish length at swim-up because a range of distributions are supported and several types of variance structures for the random effects and residuals can be fitted. Additionally, the method uses a Bayesian approach that incorporates terminology for fixed and random effects.
+
+The model has three components, 1) a probability density function, 2) a standard linear mixed model with fixed and random predictors, and 3) variance structures. See Hadfield 2010 for more information.
+
+```{r TutorialWithMyData}
+library(MCMCglmm)
+```
+
+The data are from a common garden experiment with Arctic grayling from families from two populations (Kup and Sag) reared under three different temperature treatments (T1 = 8 degrees, T2 = 12 degrees, and T3 = 16 degrees). The mating design produced full-siblings, half-siblings, and non-related individuals to obtain trait heredity estimates.
+
+Here we use length at swimup, length at swimup and yolk volume at swimup as response variables to investigate the heritability of these traits.
+
+## Length at Hatching
+The first data set is length (mm^3) at swimuping.
+```{r LoadData}
+
+swimup <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_MCMCglmm_Swimup_20230919.csv")
+
+str(swimup)
+
+```
+
+I created six different sub-datasets to simplify the models and to examine heritabilty estimate consistency of this trait among the populations and among temperature treatments. Trait heritability should not change among treatments within populations.
+
+```{r CreateDataSubsets}
+
+# Try with just one data set
+
+t1kup <- subset(swimup, population == "Kup" & treatment == "T1")
+t2kup <- subset(swimup, population == "Kup" & treatment == "T2")
+t3kup <- subset(swimup, population == "Kup" & treatment == "T3")
+
+t1sag <- subset(swimup, population == "Sag" & treatment == "T1")
+t2sag <- subset(swimup, population == "Sag" & treatment == "T2")
+t3sag <- subset(swimup, population == "Sag" & treatment == "T3")
+
+# Also:
+kup <- subset(swimup, population == "Kup")
+kupT1T2 <- subset(swimup, population == "Kup" & treatment != "T3")
+sag <- subset(swimup, population == "Sag")
+
+```
+
+Priors for these Baysian models inform the MCMC. The response variable's distribution is defined in "family" of models selected within the model but "prior" is used to define the model's random variance structure (G), and the covariance structure (R).
+
+This simple prior, below, is a commonly used inverse-Gamma distribution that creates a U-shaped prior. This is variance structure is appropriate for genetic variables, such as heritabiltiy of traits. Here, R and G are lists that each contains 1 prior for each of the random effects (Gs) and covariates (Rs) in the model.
+
+```{r DefinePriors}
+
+# Prior default for fixed effects is a very broad Normal distribution
+# R is a commonly used uninformative inverse-Gamma (U-shaped) prior and for G, three random effects need 3 G priors.
+
+simple_prior <- list(R = list(V=1, nu=0.002), G = list(G1 = list(V=1, nu=0.002)))
+
+```
+
+The "pedigree" option provides information on individual relatedness an contains the key column "animal" found in both the pedigree file (below) and the trait file (called "swimup"). This files links each individuals parentage (dam and sire) to each individual, which his used in the model to define relatedness among individuals. 
+
+I had difficulty running the model using my pedigree file without making an adjustment via the R package GeneticsPed. The model runs perfectly when I use the function "extend" on the pedigree file prior to running the model. I found this solution online after much checking and rechecking my pedigree file for typos, repeat individuals, matching column formats, etc. This solution creates an extended (long format) matrix of my pedigree data. This important step in creating this input file was not indicated in the MCMCglmm documentation or in the vingnette tutorials. 
+
+
+```{r DefinePedigree}
+cg_ped <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_MCMCglmm_Swimup_Pedigree_20230919.csv")
+
+#Create extended matrix of the pedigree data
+library(GeneticsPed)
+cg_ped <- extend(cg_ped) 
+colnames(cg_ped) <- c("animal", "sire", "dam")
+#head(cg_ped)
+head(cg_ped)
+#write.csv(cg_ped, "/Users/heidigolden/Desktop/check_cg_ped.csv")
+```
+
+
+```{r TrySimpleModelt1kup}
+
+model_t1kup <- MCMCglmm(length ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t1kup,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryT1Kup}
+summary(model_t1kup)
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t1kup_h2 = model_t1kup$VCV[, "animal"]/(model_t1kup$VCV[, "animal"] + model_t1kup$VCV[, "units"])
+mean(model_t1kup_h2) 
+HPDinterval(model_t1kup_h2) #Display 95% credible interval
+plot(model_t1kup_h2)
+#
+```
+
+
+
+```{r TrySimpleModelt2kup}
+
+model_t2kup <- MCMCglmm(length ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t2kup,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt2kup}
+summary(model_t2kup)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t2kup_h2 = model_t2kup$VCV[, "animal"]/(model_t2kup$VCV[, "animal"] + model_t2kup$VCV[, "units"])
+mean(model_t2kup_h2) 
+HPDinterval(model_t2kup_h2) #Display 95% credible interval
+plot(model_t2kup_h2)
+#
+```
+
+
+
+```{r TrySimpleModelt3kup}
+
+model_t3kup <- MCMCglmm(length ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t3kup,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt3kup}
+summary(model_t3kup)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t3kup_h2 = model_t3kup$VCV[, "animal"]/(model_t3kup$VCV[, "animal"] + model_t3kup$VCV[, "units"])
+mean(model_t3kup_h2) 
+HPDinterval(model_t3kup_h2) #Display 95% credible interval
+plot(model_t3kup_h2)
+#
+```
+
+###################################################
+###############     Sag       #####################
+###################################################
+
+
+
+```{r TrySimpleModelt1sag}
+
+model_t1sag <- MCMCglmm(length ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t1sag,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt1sag}
+summary(model_t1sag)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t1sag_h2 = model_t1sag$VCV[, "animal"]/(model_t1sag$VCV[, "animal"] + model_t1sag$VCV[, "units"])
+mean(model_t1sag_h2) 
+HPDinterval(model_t1sag_h2) #Display 95% credible interval
+plot(model_t1sag_h2)
+#
+```
+
+
+```{r TrySimpleModelt2sag}
+
+model_t2sag <- MCMCglmm(length ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t2sag,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt2sag}
+
+summary(model_t2sag)
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t2sag_h2 = model_t2sag$VCV[, "animal"]/(model_t2sag$VCV[, "animal"] + model_t2sag$VCV[, "units"])
+mean(model_t2sag_h2) 
+HPDinterval(model_t2sag_h2) #Display 95% credible interval
+plot(model_t2sag_h2)
+#
+```
+
+
+
+```{r TrySimpleModelt3sag}
+
+model_t3sag <- MCMCglmm(length ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t3sag,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt3sag}
+summary(model_t3sag)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t3sag_h2 = model_t3sag$VCV[, "animal"]/(model_t3sag$VCV[, "animal"] + model_t3sag$VCV[, "units"])
+mean(model_t3sag_h2) 
+HPDinterval(model_t3sag_h2) #Display 95% credible interval
+plot(model_t3sag_h2)
+#
+```
+
+#################################
+#################################
+####### More Complicated Model #
+#################################
+#################################
+
+Here I try a more complicated model with the full data set, including two fixed effects, population (Kup or Sag) and treatment (T1, T2, or T3) and an interaction term. The rest of the model remains the same with one random effect (animal, aka individual) and the same pedigree file used above. I increased the number of iterations, burn-in length, and thin parameters, as well.
+
+```{r PriorComplex}
+
+complex_prior <- list(R = list(R1 = list(V = 1, nu = 0.002), 
+                      R2 = list(V = 1, n = 0.002), 
+                      R3 = list(V = 1, n = 0.002), 
+                      R3 = list(V = 1, n = 0.002)),
+                      G = list(G1 = list(V=1, nu=0.002)))
+
+```
+
+
+```{r TryComplexModel}
+
+model_c <- MCMCglmm(length ~  population : treatment, random = ~animal, family = "gaussian",
+                  prior = complex_prior, pedigree = cg_ped, data = swimup,
+                  nitt = 600000, burnin = 20000, thin = 25)
+```
+
+```{r Model_cSummary}
+summary(model_c)
+```
+
+
+```{r cCalculateNarrowHeritability2}
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+all_h2 = model_c$VCV[, "animal"]/(model_c$VCV[, "animal"] + model_c$VCV[, "units"])
+mean(all_h2) 
+HPDinterval(all_h2) #Display 95% credible interval
+plot(all_h2)
+# Interesting bimodal density plot.
+```
+
+
+
+#######################################
+
+```{r Diagnostics2}
+plot(model_c$Sol)
+plot(model_c$VCV)
+
+```
+
+```{r Intercept2}
+
+effectiveSize(model_c$Sol)
+effectiveSize(model_c$VCV)
+heidel.diag(model_c$VCV)
+
+```
+#################################
+#######  Kup and Sag   ##########
+#################################
+
+
+
+
+
+
+#######################################
+Here I try the more complicated model on subsets of the data split by population (Kup and Sag), with only treatment (T1, T2, or T3) as the fixed effect. The rest of the model remains the same with one random effect (animal, aka individual) and the same pedigree file used above. I increased the number of iterations, burn-in length, and thin parameters, as well.
+
+
+```{r TryComplexModel-2}
+
+model_k <- MCMCglmm(length ~  treatment, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = kup,
+                  nitt = 600000, burnin = 20000, thin = 25)
+```
+
+```{r model_kSummary}
+summary(model_k)
+```
+
+```{r cCalculateNarrowHeritability}
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+all_h2 = model_k$VCV[, "animal"]/(model_k$VCV[, "animal"] + model_k$VCV[, "units"])
+mean(all_h2) 
+HPDinterval(all_h2) #Display 95% credible interval
+plot(all_h2)
+# Interesting bimodal density plot.
+```
+
+
+```{r Diagnostics3}
+plot(model_k$Sol)
+plot(model_k$VCV)
+
+```
+
+```{r Intercept3}
+
+effectiveSize(model_k$Sol)
+effectiveSize(model_k$VCV)
+heidel.diag(model_k$VCV)
+
+```
+
+
+
+
+All estimates for heritability for fish length at swim-up investigated here suggest length at swim-up is a highly heritable trait (narrow-sense heritability = 0.95, CI 0.81-1.00), largely governed by genetic variation.
+
+
+#################################
+#################################
+#######  End MCMCglmm  ##########
+#################################
+#################################
+
+

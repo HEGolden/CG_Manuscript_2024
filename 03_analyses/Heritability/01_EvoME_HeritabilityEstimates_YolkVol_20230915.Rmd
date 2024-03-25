@@ -1,0 +1,287 @@
+---
+title: "Heritability -  Hatch Yolk Volume"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+Here I use the R package MCMCglmm to fit generalized linear mixed models to our 2017 common garden yolk_vol at hatch response variable. I chose this modeling approach to provide estimates of heritability for volk volume at hatch because a range of distributions are supported and several types of variance structures for the random effects and residuals can be fitted. Additionally, the method uses a Bayesian approach that incorporates terminology for fixed and random effects.
+
+The model has three components, 1) a probability density function, 2) a standard linear mixed model with fixed and random predictors, and 3) variance structures. See Hadfield 2010 for more information.
+
+
+```{r TutorialWithMyData}
+library(MCMCglmm)
+```
+
+The data are from a common garden experiment with Arctic grayling from families from two populations (Kup and Sag) reared under three different temperature treatments (T1 = 8 degrees, T2 = 12 degrees, and T3 = 16 degrees). The mating design produced full-siblings, half-siblings, and non-related individuals to obtain trait heredity estimates.
+
+Here we use yolk_vol at hatch and yolk_vol at swimup as response variables to investigate the heritability of these traits.
+
+## Length at Hatching
+The first data set is yolk_vol (mm^3) at hatching.
+```{r LoadData}
+
+hatch <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_MCMCglmm_Hatch_20230919.csv")
+
+str(hatch)
+
+```
+
+I created six different sub-datasets to simplify the models and to examine heritabilty estimate consistency of this trait among the populations and among temperature treatments. Trait heritability should not change among treatments within populations.
+
+```{r CreateDataSubsets}
+
+# Try with just one data set
+
+t1kup <- subset(hatch, population == "Kup" & treatment == "T1")
+t2kup <- subset(hatch, population == "Kup" & treatment == "T2")
+t3kup <- subset(hatch, population == "Kup" & treatment == "T3")
+
+t1sag <- subset(hatch, population == "Sag" & treatment == "T1")
+t2sag <- subset(hatch, population == "Sag" & treatment == "T2")
+t3sag <- subset(hatch, population == "Sag" & treatment == "T3")
+
+```
+
+Priors for these Baysian models inform the MCMC. The response variable's distribution is defined in "family" of models selected within the model but "prior" is used to define the model's random variance structure (G), and the covariance structure (R).
+
+This simple prior, below, is a commonly used inverse-Gamma distribution that creates a U-shaped prior. This is variance structure is appropriate for genetic variables, such as heritabiltiy of traits. Here, R and G are lists that each contains 1 prior for each of the random effects (Gs) and covariates (Rs) in the model.
+
+```{r DefinePriors}
+
+# Prior default for fixed effects is a very broad Normal distribution
+# R is a commonly used uninformative inverse-Gamma (U-shaped) prior and for G, three random effects need 3 G priors.
+
+simple_prior <- list(R = list(V=1, nu=0.002), G = list(G1 = list(V=1, nu=0.002)))
+
+```
+
+The "pedigree" option provides information on individual relatedness an contains the key column "animal" found in both the pedigree file (below) and the trait file (called "hatch"). This files links each individuals parentage (dam and sire) to each individual, which his used in the model to define relatedness among individuals. 
+
+I had difficulty running the model using my pedigree file without making an adjustment via the R package GeneticsPed. The model runs perfectly when I use the function "extend" on the pedigree file prior to running the model. I found this solution online after much checking and rechecking my pedigree file for typos, repeat individuals, matching column formats, etc. This solution creates an extended (long format) matrix of my pedigree data. This important step in creating this input file was not indicated in the MCMCglmm documentation or in the vingnette tutorials. 
+
+
+```{r DefinePedigree}
+cg_ped <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_MCMCglmm_Hatch_Pedigree_20230919.csv")
+
+#Create extended matrix of the pedigree data
+library(GeneticsPed)
+cg_ped <- extend(cg_ped) 
+colnames(cg_ped) <- c("animal", "sire", "dam")
+#head(cg_ped)
+str(cg_ped)
+#write.csv(cg_ped, "/Users/heidigolden/Desktop/check_cg_ped.csv")
+```
+
+
+```{r TrySimpleModelt1kup, echo=FALSE}
+
+model_t1kup <- MCMCglmm(yolk_vol ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t1kup,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryT1Kup}
+summary(model_t1kup)
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t1kup_h2 = model_t1kup$VCV[, "animal"]/(model_t1kup$VCV[, "animal"] + model_t1kup$VCV[, "units"])
+mean(model_t1kup_h2) 
+HPDinterval(model_t1kup_h2) #Display 95% credible interval
+plot(model_t1kup_h2)
+#
+```
+
+
+
+```{r TrySimpleModelt2kup, echo=FALSE}
+
+model_t2kup <- MCMCglmm(yolk_vol ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t2kup,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt2kup}
+summary(model_t2kup)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t2kup_h2 = model_t2kup$VCV[, "animal"]/(model_t2kup$VCV[, "animal"] + model_t2kup$VCV[, "units"])
+mean(model_t2kup_h2) 
+HPDinterval(model_t2kup_h2) #Display 95% credible interval
+plot(model_t2kup_h2)
+#
+```
+
+
+
+```{r TrySimpleModelt3kup, echo=FALSE}
+
+model_t3kup <- MCMCglmm(yolk_vol ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t3kup,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt3kup}
+summary(model_t3kup)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t3kup_h2 = model_t3kup$VCV[, "animal"]/(model_t3kup$VCV[, "animal"] + model_t3kup$VCV[, "units"])
+mean(model_t3kup_h2) 
+HPDinterval(model_t3kup_h2) #Display 95% credible interval
+plot(model_t3kup_h2)
+#
+```
+
+###################################################
+###############     Sag       #####################
+###################################################
+
+
+
+```{r TrySimpleModelt1sag, echo=FALSE}
+
+model_t1sag <- MCMCglmm(yolk_vol ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t1sag,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt1sag}
+summary(model_t1sag)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t1sag_h2 = model_t1sag$VCV[, "animal"]/(model_t1sag$VCV[, "animal"] + model_t1sag$VCV[, "units"])
+mean(model_t1sag_h2) 
+HPDinterval(model_t1sag_h2) #Display 95% credible interval
+plot(model_t1sag_h2)
+#
+```
+
+
+```{r TrySimpleModelt2sag, echo=FALSE}
+
+model_t2sag <- MCMCglmm(yolk_vol ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t2sag,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt2sag}
+
+summary(model_t2sag)
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t2sag_h2 = model_t2sag$VCV[, "animal"]/(model_t2sag$VCV[, "animal"] + model_t2sag$VCV[, "units"])
+mean(model_t2sag_h2) 
+HPDinterval(model_t2sag_h2) #Display 95% credible interval
+plot(model_t2sag_h2)
+#
+```
+
+
+
+```{r TrySimpleModelt3sag, echo=FALSE}
+
+model_t3sag <- MCMCglmm(yolk_vol ~  1, random = ~animal, family = "gaussian",
+                  prior = simple_prior, pedigree = cg_ped, data = t3sag,
+                  nitt = 100000, burnin = 10000, thin = 10)
+```
+
+```{r SummaryModelt3sag}
+summary(model_t3sag)
+
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+model_t3sag_h2 = model_t3sag$VCV[, "animal"]/(model_t3sag$VCV[, "animal"] + model_t3sag$VCV[, "units"])
+mean(model_t3sag_h2) 
+HPDinterval(model_t3sag_h2) #Display 95% credible interval
+plot(model_t3sag_h2)
+#
+```
+
+#################################
+#################################
+####### More Complicated Model #
+#################################
+#################################
+
+Here I try a more complicated model with the full data set, including two fixed effects, population (Kup or Sag) and treatment (T1, T2, or T3) and an interaction term. The rest of the model remains the same with one random effect (animal, aka individual) and the same pedigree file used above. I increased the number of iterations, burn-in yolk_vol, and thin parameters, as well.
+
+```{r PriorComplex}
+
+complex_prior <- list(R = list(R1 = list(V = 1, nu = 0.002), 
+                      R2 = list(V = 1, n = 0.002), 
+                      R3 = list(V = 1, n = 0.002), 
+                      R3 = list(V = 1, n = 0.002)),
+                      G = list(G1 = list(V=1, nu=0.002)))
+
+```
+
+
+```{r TryComplexModel, echo=FALSE}
+
+model_c <- MCMCglmm(yolk_vol ~  population : treatment, random = ~animal, family = "gaussian",
+                  prior = complex_prior, pedigree = cg_ped, data = hatch,
+                  nitt = 600000, burnin = 20000, thin = 25)
+```
+
+```{r Model_cSummary}
+summary(model_c)
+```
+
+
+```{r cCalculateNarrowHeritability}
+
+# narrow sense heritability = h2 = Va/Va+Vp
+
+all_h2 = model_c$VCV[, "animal"]/(model_c$VCV[, "animal"] + model_c$VCV[, "units"])
+mean(all_h2) 
+HPDinterval(all_h2) #Display 95% credible interval
+plot(all_h2)
+# Interesting bimodal density plot.
+```
+
+
+
+#######################################
+
+```{r Diagnostics}
+plot(model_c$Sol)
+plot(model_c$VCV)
+
+```
+
+```{r Intercept}
+
+effectiveSize(model_c$Sol)
+effectiveSize(model_c$VCV)
+heidel.diag(model_c$VCV)
+
+```
+
+All estimates for heritability for yolk volume at hatching investigated here suggest yolk volume at hatching is a highly heritable trait (narrow-sense heritability = 0.95, CI 0.89-1.00), largely governed by genetic variation.
+
+
+
+#################################
+#################################
+#######  End MCMCglmm  ##########
+#################################
+#################################
+
+

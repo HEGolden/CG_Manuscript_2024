@@ -1,0 +1,505 @@
+---
+title: "00_CG_Lengths_Growth_Analysis_2023"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction:
+We conducted a common garden experiment in 2017, which included taking length measurements of larval fish over time. If we had enough larval fish per family in the treatment chamber (each family was replicated within each of three temperature treatments T1=8C, T2=12C, T3=16C), we collected a subsample of individuals, fixed the subsample in 10% formalin, then preserved the subsample in 70% ethanol until the fish could be measured. If we did not have enough larval fish to collect a subsample without devoiding the treatment tank of that family, i.e. due to high mortality, the larval fish were measured while alive (live) and returned to their treatment tank's chamber. 
+
+Fish were either measured after being preserved in ethanol or measured live. If measured live I used the regression formula from our predictive model: ethanol.lnth = 0.0.835(live.length) + 0 mm
+
+
+Load the Data:
+The data set consists of fish lengths measured over time. We had three treatment groups (T1 = 16 C, T2 = 12 C, and T3 = 16 C) and three populations (locations) per treatment (K or Kup = Kuparuk, O or Sag = Lower Oksrukuyik (Oks3), and OZ or OksZev = Upper Oksrukuyik). We also have fish that we raised from eggs (reared) and that we caught from the rivers soon after hatching (wild). 
+
+```{r LoadLengthData}
+lnth <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Length_YolkVolume/00_CG_LengthYolkVolume_WokingFile_HG_2023.csv")
+
+lnth <- subset(lnth, days.post.fert >= 25)
+
+ lnth$location <- as.factor(lnth$location)
+ lnth$alt.dpf <- as.numeric(lnth$alt.dpf)
+ lnth$days.post.fert <- as.numeric(lnth$days.post.fert)
+ lnth$Treatment <- as.factor(lnth$Treatment)
+ lnth$family <- as.factor(lnth$family)
+ lnth$disposition <- as.factor(lnth$disposition)
+ lnth$reared.wild <- as.factor(lnth$reared.wild)
+ lnth$measured.by <- as.factor(lnth$measured.by)
+ lnth$duplicate.to.remove <- as.factor(lnth$duplicate.to.remove)
+ lnth$yolk.vol <- as.factor(lnth$yolk.vol)
+ lnth$growth <- as.factor(lnth$growth)
+ lnth$ln.at.hatch <- as.factor(lnth$ln.at.hatch)
+ lnth$ln.at.swimup <- as.factor(lnth$ln.at.swimup)
+ lnth$respiration <- as.factor(lnth$respiration)
+ lnth$experiment <- as.factor(lnth$experiment)
+ 
+str(lnth)
+```
+
+Here I create a dataset containing "reared" fish (not wild) and length data with "live" fish lengths corrected with the regression formula to approximate shrinkage due to ethanol preservation.
+This dataset also excludes fish from the OksZev location
+```{r AddLibrary}
+library(dplyr)
+```
+
+
+```{r subsetData}
+data1 <- subset(lnth, reared.wild == "reared" & location != "OksZev" & experiment == "growth")
+
+data1 <- data1[complete.cases(data1$Length.mm), ] 
+
+data_15to40 <- subset(data1, days.post.fert < 41)
+str(data_15to40)
+
+newd_15to40 <- as.data.frame(data_15to40[ ,c("location", "alt.dpf", "Treatment", "family", "indiv.1to15", "adj_Length")])
+head(newd_15to40)
+
+write.csv(newd_15to40, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Length_Growth_D15-D40_data.csv")
+```
+```{r loadNewData_D15to40}
+newd <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Length_Growth_D15-D40_data.csv")
+
+
+newd$location <- as.factor(newd$location)
+newd$Treatment <- as.factor(newd$Treatment)
+newd$family <- as.factor(newd$family)
+newd$indiv.1to15 <- as.factor(newd$indiv.1to15)
+
+str(newd)
+```
+
+
+
+LENGTH DATA - Linear model.
+```{r lmLnth}
+new.lm <- lm(adj_Length ~ alt.dpf * location * Treatment, data = newd)
+
+summary(new.lm)
+```
+
+CREATE SUMMARY STATISTICS:
+
+Function to Summarize the Data:
+```{r SummarizeFunction}
+library(dplyr)
+
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      minimum = min(x[[col]], na.rm=TRUE),
+      maximum = max(x[[col]], na.rm=TRUE),
+      n = length(x[[col]]),
+      v = var(x[[col]], na.rm = TRUE),
+      se = sd(x[[col]])/sqrt(length(x[[col]])), na.rm=TRUE)
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+```
+
+
+
+Summarize the Data:
+
+```{r SummarizeData}
+head(newd)
+data_stats <- data_summary(newd, varname = "adj_Length", 
+                    groupnames=c("location", "alt.dpf", "Treatment"))
+
+data_stats
+
+data_stats$days.post.fert <- as.numeric(data_stats$alt.dpf)
+
+write.csv(data_stats, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/01_CG_SumStats_Lnth_2023.csv")
+```
+
+
+
+Plot Length Over Time (with "live" converted to "ethanol" estimated length):
+
+```{r Plot_reared}
+library(ggplot2)
+
+p <- ggplot(data = data_stats, aes(x = alt.dpf, y = adj_Length, color = location)) + xlim(0, 45) + ylim(0,25.5) + geom_point() + geom_line() + geom_errorbar(aes(ymin=adj_Length-se, ymax=adj_Length+se), width=.2, )
+
+p +  facet_wrap(~ Treatment, labeller = labeller(Treatment = function(string) paste(string, "°C"))) + labs(title = "Growth", y = "Length (mm)", x = "Days Post Fertilization") +
+  theme_minimal()
+
+```
+
+
+
+
+Analyze the Data:
+```{r ANOVA_EstLive}
+aov.est <- aov(adj_Length ~ alt.dpf + location + Treatment, data = newd)
+summary(aov.est)
+```
+
+
+
+## Instantaneous Growth (or Delta Length over Delta Time):
+Summarize the Data including FAMILY, to use for calculating instantaneous growth rates based on changes in length over time for each family, treatment, location:
+
+```{r SummarizeDataWithFamily}
+fam.data <- data_summary(newd, varname="adj_Length", 
+                    groupnames=c("location", "alt.dpf", "Treatment", "family"))
+
+fam.data$days.post.fert <- as.numeric(fam.data$alt.dpf)
+head(fam.data)
+write.csv(fam.data, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_LengthSummary_Family_2023.csv")
+
+######
+# This file was opened in Excel, where calculations for Delta Ln and Delta T
+# Were made. See the file 03_CG_SpecificLengthCalculations_Family_20201216.xlsx
+# For details.
+#####
+```
+
+# Function to Calcualte Delta LN and Delta T
+I use the data created above to calculate Delta LN and Delta T for each Location, Treatment, and family combination. This dataframe is used to create an new dataframe with DeltaLn/DeltaT values for data summary and graphing.
+
+```{r FunctionLengthDiffs}
+library(dplyr)
+
+calc_MxMn <- function(data, varname, groupnames) {
+  library(plyr)
+  
+  calc_MxMn <- function(x, col) {
+    data.frame(
+      minimum = min(x[[col]], na.rm = TRUE),
+      maximum = max(x[[col]], na.rm = TRUE)
+    )
+  }
+  
+  data_sum <- ddply(data, groupnames, .fun = calc_MxMn, varname)
+  data_sum <- rename(data_sum, c("minimum" = paste0(varname, ".minimum"),
+                                 "maximum" = paste0(varname, ".maximum")))
+  return(data_sum)
+}
+
+  
+
+```
+
+
+Calculate the differences in Length for each Location, Treatment, and Family.
+```{r CalcLengthDiffs}
+fam.means <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_LengthSummary_Family_2023.csv")
+
+FamLnMxMn <- calc_MxMn(fam.means, varname = "adj_Length", 
+                    groupnames=c("location", "Treatment", "family"))
+
+FamLnMxMn$DeltaLn <- FamLnMxMn$adj_Length.maximum - FamLnMxMn$adj_Length.minimum
+
+str(FamLnMxMn)
+```
+Calculate the differences in Length for each Location, Treatment, and Family.
+```{r Calc_DPF_Diffs}
+fam.means <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_LengthSummary_Family_2023.csv")
+
+FamDPF_MxMn <- calc_MxMn(fam.means, varname = "alt.dpf", 
+                    groupnames=c("location", "Treatment", "family"))
+
+FamDPF_MxMn$DeltaT <- FamDPF_MxMn$alt.dpf.maximum - FamDPF_MxMn$alt.dpf.minimum
+
+str(FamDPF_MxMn)
+
+```
+
+Merge the Max Min data sets in order to calculate the Delta Ln over Delta T.
+
+```{r MergeDataSets}
+mergeDeltas <- merge(FamLnMxMn, FamDPF_MxMn, by = c("location", "Treatment", "family"))
+
+# Calculate specific growth by dividing change in length over change in time for each family in each treatment.
+mergeDeltas$SpecGrowth <- mergeDeltas$DeltaLn/mergeDeltas$DeltaT
+
+# Check that it worked, and ...
+str(mergeDeltas)
+
+# ... save the dataframe to 01_derived_data folder to check accuracy.
+write.csv(mergeDeltas, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_Specific_Growth_D15-D40_data_2023.csv")
+
+########################################
+########################################
+# Check this data set and make sure everything looks right. If perfect, save it to the 02_clean_data folder. If not perfect, reassess code above until perfect.
+########################################
+########################################
+
+# Adjustments: Some Families in T3 (16 degrees) were only measured once (i.e., K1 and K3 on 15 days-post-fert) so DeltaLn and DeltaT = 0. These rows need to be removed from the dataset.
+
+newDeltas <- subset(mergeDeltas, DeltaLn != 0)
+
+# It's perfect!
+write.csv(newDeltas, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Specific_Growth_D15-D40_data_2023.csv")
+
+
+```
+
+
+
+```{r SummarizeDeltaLnOverDeltaT}
+spgro <- read.csv("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/02_clean_data/CG_Specific_Growth_D15-D40_data_2023.csv")
+
+sum_spgro <- data_summary(spgro, varname="SpecGrowth", 
+                    groupnames=c("location", "Treatment"))
+
+str(sum_spgro)
+
+```
+
+Create Graph of Delta Length over Delta Time:
+```{r DeltaLnOverDeltaT-Graph}
+
+library(ggplot2)
+
+p.spgro <- ggplot(data = sum_spgro, aes(x = Treatment, y = SpecGrowth, color = location)) + 
+  ylim(0, 0.75) + 
+  geom_point() +
+  geom_errorbar(aes(ymin = SpecGrowth - se, ymax = SpecGrowth + se), width=.2, )
+
+p.spgro
+
+
+```
+Kup population growth rate increases with increasing treatment temperature (T1 = 8C, T2 = 12C, T3 = 16C).
+
+Sag (Oks3) population growth rate increases from T1 to T2 (8C to 12C), but decreases from T2 to T3 (12C to 16C).
+
+This result is consistent with thermal stress cold water salmonids (i.e. Brook Trout), where specific growth rate increases with increasing temperature up to a threshold. Once the threshold is reached, specific growth rate decreases with increasing temperature.
+
+
+
+```{r TwoWayANOVA}
+
+two.way <- aov(SpecGrowth ~ location * Treatment, data = spgro)
+
+summary(two.way)
+
+```
+
+Two-way ANOVA with interaction shows a significant treatment effect, but no significant interaction between Treatment and location.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%   PERMUTATION TESTS !!   %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Below is the code for permutation testing, which tests whether or not the difference in the means of two groups is significantly different from randomly generated mean differences, i.e. could the difference in means be due to random chance.
+
+1. Create groups for comparison: grp.1 and grp.2.
+2. Assign labels to these groups (that can be shuffled, i.e. randomized, later).
+3. Create a dataframe containing grp.1 and grp.2.
+4. Find the difference in sample means between the groups, this is the test statistic.
+5. Create a random distribution by shuffling the group labels and find the mean between groups for this randomly shuffled data.
+6. Resample the data by shuffling labels and find the mean 9999 times to create a random distribution.
+7. Test for significance between the test statistic (real mean) and the randomly generated mean differences.
+
+Then Finally...
+8. Plot the histogram of the randomly generated mean differences with the test statistic, i.e., true mean difference.
+First, I create data sets for location and Treatment
+
+
+```{r PermTest-DataSets}
+
+KupT1 <- subset(subset(spgro, Treatment == "T1"), location == "Kup")
+KupT2 <- subset(subset(spgro, Treatment == "T2"), location == "Kup")
+KupT3 <- subset(subset(spgro, Treatment == "T3"), location == "Kup")
+
+SagT1 <- subset(subset(spgro, Treatment == "T1"), location == "Sag")
+SagT2 <- subset(subset(spgro, Treatment == "T2"), location == "Sag")
+SagT3 <- subset(subset(spgro, Treatment == "T3"), location == "Sag")
+
+```
+
+
+
+2. Specific Growth for Tank 1: Sag vs Kup
+
+```{r CreatePermutationTest-Tank1}
+# 1. Create two Total Length Groups for comparison of distributions - CHANGE TANK NUMBERS BELOW:
+
+grp.1 <- SagT1$SpecGrowth # Tank data for Sag
+
+grp.2 <- KupT1$SpecGrowth # Tank data for Kup
+
+# 2. Assigns labels: "1" for grp.1 data and "2" for grp.2 data
+groups <- c(rep(1, length(grp.1)), rep(2, length(grp.2)))
+
+# 3. Create a new dataframe containing the two groups
+data <- c(grp.1, grp.2)
+
+# 4. Create the Test Statistic - find the true mean difference
+test.diff <- diff(by(data, groups, mean))
+test.diff
+
+# 5. Create a random distribution by shuffling the group labels
+s <- sample(groups, length(groups), FALSE)  #suffles the lables
+# then find the mean of the random distribution
+diff(by(data, s, mean)) # finds the mean
+
+# 6. Resample to create random distribution
+max.iter <- 9999
+examples <- unlist(lapply(1:max.iter, function(x) {
+  diff(by(data, sample(groups, length(groups), FALSE), mean))  
+}))
+
+
+# 7. Test for significance between the test statistic (real mean) and the randomly generated mean differences.
+p_value.adln <- (sum(abs(examples) > abs(test.diff)) + 1) / (max.iter + 1)  
+p_value.adln
+
+```
+
+
+Plot The Results - Plot random distribution
+```{r PlotRandomDistributionWithTestStat-Tank1, fig=TRUE}
+###############################
+## Change Site Name in Title
+###############################
+
+
+# 8. Plot the histogram of the randomly generated mean differences with the test statistic, i.e., true mean difference. 
+par(mfrow=c(1,1))
+hist(examples, col = "blue", breaks = 25, main="Permutation Test: Specific Growth Tank 1", xlab="", xlim = c(-0.5, 1-0.5))
+
+# plot our test stat
+abline(v = test.diff, col = "red", lwd = 2)
+
+
+###################################################
+## Right click Graph and Save as File Name, below
+###################################################
+
+
+```
+3. Specific Growth for Tank 2: Sag vs Kup
+
+```{r CreatePermutationTest-Tank2}
+# 1. Create two Total Length Groups for comparison of distributions - CHANGE TANK NUMBERS BELOW:
+
+grp.1 <- SagT2$SpecGrowth # Tank data for Sag
+
+grp.2 <- KupT2$SpecGrowth # Tank data for Kup
+
+# 2. Assigns labels: "1" for grp.1 data and "2" for grp.2 data
+groups <- c(rep(1, length(grp.1)), rep(2, length(grp.2)))
+
+# 3. Create a new dataframe containing the two groups
+data <- c(grp.1, grp.2)
+
+# 4. Create the Test Statistic - find the true mean difference
+test.diff <- diff(by(data, groups, mean))
+test.diff
+
+# 5. Create a random distribution by shuffling the group labels
+s <- sample(groups, length(groups), FALSE)  #suffles the lables
+# then find the mean of the random distribution
+diff(by(data, s, mean)) # finds the mean
+
+# 6. Resample to create random distribution
+max.iter <- 9999
+examples <- unlist(lapply(1:max.iter, function(x) {
+  diff(by(data, sample(groups, length(groups), FALSE), mean))  
+}))
+
+
+# 7. Test for significance between the test statistic (real mean) and the randomly generated mean differences.
+p_value.adln <- (sum(abs(examples) > abs(test.diff)) + 1) / (max.iter + 1)  
+p_value.adln
+
+```
+
+
+Plot The Results - Plot random distribution
+```{r PlotRandomDistributionWithTestStat-AdultLength, fig=TRUE}
+###############################
+## Change Site Name in Title
+###############################
+
+
+# 8. Plot the histogram of the randomly generated mean differences with the test statistic, i.e., true mean difference. 
+par(mfrow=c(1,1))
+hist(examples, col = "blue", breaks = 25, main="Permutation Test: Specific Growth Tank 2", xlab="", xlim = c(-0.5, 1-0.5))
+
+# plot our test stat
+abline(v = test.diff, col = "red", lwd = 2)
+
+
+###################################################
+## Right click Graph and Save as File Name, below
+###################################################
+
+```
+
+4. Specific Growth for Tank 3: Sag vs Kup
+
+```{r CreatePermutationTest-Tank3}
+# 1. Create two Total Length Groups for comparison of distributions - CHANGE TANK NUMBERS BELOW:
+
+grp.1 <- SagT3$SpecGrowth # Tank data for Sag
+
+grp.2 <- KupT3$SpecGrowth # Tank data for Kup
+
+# 2. Assigns labels: "1" for grp.1 data and "2" for grp.2 data
+groups <- c(rep(1, length(grp.1)), rep(2, length(grp.2)))
+
+# 3. Create a new dataframe containing the two groups
+data <- c(grp.1, grp.2)
+
+# 4. Create the Test Statistic - find the true mean difference
+test.diff <- diff(by(data, groups, mean))
+test.diff
+
+# 5. Create a random distribution by shuffling the group labels
+s <- sample(groups, length(groups), FALSE)  #suffles the lables
+# then find the mean of the random distribution
+diff(by(data, s, mean)) # finds the mean
+
+# 6. Resample to create random distribution
+max.iter <- 9999
+examples <- unlist(lapply(1:max.iter, function(x) {
+  diff(by(data, sample(groups, length(groups), FALSE), mean))  
+}))
+
+
+# 7. Test for significance between the test statistic (real mean) and the randomly generated mean differences.
+p_value.adln <- (sum(abs(examples) > abs(test.diff)) + 1) / (max.iter + 1)  
+p_value.adln
+
+```
+
+
+Plot The Results - Plot random distribution
+```{r PlotRandomDistributionWithTestStat-Tank3, fig=TRUE}
+###############################
+## Change Site Name in Title
+###############################
+
+
+# 8. Plot the histogram of the randomly generated mean differences with the test statistic, i.e., true mean difference. 
+par(mfrow=c(1,1))
+hist(examples, col = "blue", breaks = 25, main="Permutation Test: Specific Growth Tank 3", xlab="", xlim = c(-0.5, 1-0.5))
+
+# plot our test stat
+abline(v = test.diff, col = "red", lwd = 2)
+
+
+###################################################
+## Right click Graph and Save as File Name, below
+###################################################
+
+
+```

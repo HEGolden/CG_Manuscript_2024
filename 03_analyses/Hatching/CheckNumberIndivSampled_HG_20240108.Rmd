@@ -1,0 +1,68 @@
+---
+title: "CheckNumberIndivSampled_HG_20240108"
+author: "Heidi E Golden"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## CREATE SUMMARY STATISTICS FUNCTION
+
+Function to Summarize the Data:
+```{r SummarizeFunction}
+library(dplyr)
+
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(#mean = mean(x[[col]], na.rm=TRUE),
+      #minimum = min(x[[col]], na.rm=TRUE),
+      #maximum = max(x[[col]], na.rm=TRUE),
+      n = length(x[[col]])#,
+      #v = var(x[[col]], na.rm = TRUE),
+      #se = sd(x[[col]])/sqrt(length(x[[col]])), na.rm=TRUE
+      )
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("n" = varname)) #Change as needed
+  return(data_sum)
+}
+
+```
+
+Load the data file - created from 00_CG_LengthYolkVolume_WokingFile_HG_2023.xlsx, saved as CheckNumberIndivSampled_HG_20240108.xlsx.
+```{r SubsetOriginalData, echo=FALSE, warning=FALSE}
+# If necessary, install the required packages for reading and writing .xlsx to .csv
+#install.packages("readxl")
+#install.packages("writexl")
+
+# Load the required packages for reading and writing .xlsx to .csv
+library(readxl)
+library(writexl)
+
+########################################
+# Use the read_excel() function from the readxl package to read the .xlsx file. 
+# Specify the file path and set sheet = 1 to read the first sheet:
+
+lv_data <- as.data.frame(read_excel("/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/00_raw_data/Length_YolkVolume/CheckNumberIndivSampled_HG_20240108.xlsx", sheet = 1))
+
+# Lots of warnings due to missing values in numerous columns for this spreadsheet but for the subset we are creating, that's okay.
+
+
+# Check the structure of the columns we want to use:
+str(lv_data)
+
+```
+
+Calculate the number of individuals that were sampled and preserved in ethanol for yolk volume and/or length determination.
+```{r SummarizeDataWithFamily}
+indiv_sampled <- data_summary(lv_data, varname="indiv.1to15", 
+                    groupnames=c("disposition", "Treatment", "date", "fam.for.sorting", "experiment"))
+
+head(indiv_sampled)
+#write.csv(indiv_sampled, "/Users/heidigolden/Dropbox/00_Consulting/UConn/CommonGarden/00_CG_Manuscript/01_derived_data/CG_2017_IndividualsSampled_HG_20240108.csv")
+```
